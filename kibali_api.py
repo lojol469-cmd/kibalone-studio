@@ -86,8 +86,8 @@ from ai_procedural_3d import generate_3d_by_ai, generate_animation_by_ai, genera
 # 🚀 NOUVEAU: Générateur HYBRIDE Mistral + CodeLlama
 from hybrid_ai_generator import generate_hybrid_3d, init_hybrid_generator, fix_broken_code
 
-# 🖼️ NOUVEAU: Analyseur d'images (CLIP + OCR + YOLO)
-from image_analyzer_api import init_analyzer
+# 🖼️ NOUVEAU: Analyseur d'images (CLIP + OCR + YOLO) - Import lazy pour ne pas ralentir le démarrage
+image_analyzer = None
 
 # Import du générateur AVANCÉ avec multi-méthodes
 from advanced_3d_generator import generate_advanced_3d
@@ -260,6 +260,8 @@ def analyze_image():
     }
     """
     try:
+        global image_analyzer
+        
         data = request.json
         image_data = data.get('image', '')
         
@@ -271,11 +273,14 @@ def analyze_image():
         
         print(f"🖼️  Analyse d'image de référence...")
         
-        # Initialise l'analyseur si nécessaire
-        analyzer = init_analyzer()
+        # Initialise l'analyseur si nécessaire (lazy loading)
+        if image_analyzer is None:
+            print("📦 Chargement du module d'analyse d'images...")
+            from image_analyzer_api import init_analyzer
+            image_analyzer = init_analyzer()
         
         # Analyse l'image
-        analysis = analyzer.analyze_image(image_data)
+        analysis = image_analyzer.analyze_image(image_data)
         
         print(f"✅ Analyse terminée:")
         print(f"   Description: {analysis['description']}")
