@@ -48,25 +48,6 @@ except:
 # CATÉGORIE 1: GÉNÉRATION 3D
 # ============================================
 
-def tool_meshy_generate(prompt: str) -> str:
-    """
-    Génère un modèle 3D PHOTORÉALISTE avec Meshy.ai.
-    Utilise pour: personnages réalistes, objets détaillés, textures HD.
-    """
-    try:
-        response = requests.post(
-            'http://localhost:11003/api/text-to-3d-meshy',
-            json={'prompt': prompt, 'art_style': 'realistic'},
-            timeout=120
-        )
-        if response.ok:
-            data = response.json()
-            if data.get('success'):
-                return f"✅ Modèle 3D photoréaliste créé: {data.get('model_path', 'generated.obj')}"
-            return f"⚠️ {data.get('message', 'Configuration API Meshy requise')}"
-        return "❌ API Meshy non disponible"
-    except Exception as e:
-        return f"❌ Erreur Meshy: {str(e)}"
 
 def tool_procedural_generate(prompt: str, model_type: str = "character") -> str:
     """
@@ -775,80 +756,6 @@ def tool_list_capabilities() -> str:
 🚀 KIBALONE STUDIO - 48 OUTILS DISPONIBLES
 
 📦 GÉNÉRATION 3D (5):
-  • MeshyGenerate - Photoréaliste IA
-  • ProceduralGenerate - Géométrie rapide
-  • AdvancedGenerate - Anatomie complexe
-  • RealisticGenerate - Textures HD
-  • TextureGenerate - Textures PBR
-
-🔬 RECONSTRUCTION (4):
-  • MiDaSCreateSession - Init photogrammétrie
-  • MiDaSUploadImage - Upload photos
-  • MiDaSGenerateMesh - Génère mesh 3D
-  • TripoSRImageTo3D - 1 image → 3D
-
-🎬 ANIMATION (4):
-  • GenerateAnimation - Keyframes IA
-  • CameraAnimation - Caméra cinématique
-  • KeyframesCreate - Keyframes manuels
-  • OrganicMovement - Mocap IA
-
-🔧 MODIFICATION (6):
-  • RepairMesh - Répare géométrie
-  • OptimizeMesh - Réduit polygones
-  • SubdivideMesh - Augmente résolution
-  • TransformMesh - Déplace/Tourne/Scale
-  • MergeMeshes - Fusionne objets
-  • BooleanOperation - Union/Soustraction
-
-📐 MESURES (5):
-  • MeasureDistance - Distance 2 points
-  • MeasureVolume - Volume/Surface
-  • CalculateBounds - Bounding box
-  • DetectCollisions - Intersections
-  • AnalyzeScene - État complet scène
-
-🏗️ IMPRESSION 3D (4):
-  • SliceMesh - Génère G-code
-  • GenerateSupports - Supports auto
-  • OrientForPrint - Orientation optimale
-  • CheckPrintability - Vérifie imprimabilité
-
-💾 IMPORT/EXPORT (5):
-  • ExportGLTF - Web (Three.js)
-  • ExportOBJ - Universel
-  • ExportSTL - Impression 3D
-  • ExportFBX - Game engines
-  • ImportMesh - Charge fichiers
-
-🖥️ INTERFACE & WIDGETS (1):
-  • ToggleAxisWidget - Widget orientation axes 3D
-
-🎥 CONTRÔLE CAMÉRA EXPERT (10):
-  • CameraOrbit360, CameraMove, CameraRotate
-  • CameraFlyTo, CameraLookAt, CameraZoom
-  • CameraPan, CameraShake, CameraPreset, CameraStop
-
-🔍 RECHERCHE ASSETS DYNAMIQUE (4):
-  • Search3DModels - Sketchfab
-  • SearchTextures - Poly Haven
-  • FetchCompleteAsset - AUTO
-  • WebSearch - Tavily
-
-✨ Total: 48 outils orchestrés par IA
-"""
-
-# ============================================
-# REGISTRY - TOUS LES OUTILS
-# ============================================
-
-ALL_TOOLS_DEFINITIONS = [
-    # GÉNÉRATION 3D (5)
-    {
-        "name": "MeshyGenerate",
-        "func": tool_meshy_generate,
-        "description": "Génère un modèle 3D photoréaliste avec Meshy.ai. Qualité maximale, textures HD. Pour personnages réalistes, objets détaillés, environnements complexes."
-    },
     {
         "name": "ProceduralGenerate",
         "func": tool_procedural_generate,
