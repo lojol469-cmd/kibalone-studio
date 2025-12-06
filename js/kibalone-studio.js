@@ -1923,6 +1923,11 @@ window.addEventListener('DOMContentLoaded', () => {
     // Rend studio accessible globalement pour le code généré
     window.studio = studio;
     
+    // Force le redimensionnement du canvas
+    setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+    }, 100);
+    
     // Message de bienvenue simple
     setTimeout(() => {
         addChatMessage('ai', '👋 Bienvenue ! Tapez une demande pour créer des objets 3D (ex: "forêt", "robot", "château")');
