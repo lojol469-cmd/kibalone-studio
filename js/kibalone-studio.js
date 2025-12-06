@@ -1834,6 +1834,9 @@ let studio;
 window.addEventListener('DOMContentLoaded', () => {
     studio = new KibaloneStudio();
     
+    // Rend studio accessible globalement pour le code généré
+    window.studio = studio;
+    
     // Message de bienvenue simple
     setTimeout(() => {
         addChatMessage('ai', '👋 Bienvenue ! Tapez une demande pour créer des objets 3D (ex: "forêt", "robot", "château")');
