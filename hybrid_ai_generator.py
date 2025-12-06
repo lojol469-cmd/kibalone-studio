@@ -144,7 +144,18 @@ Réponds UNIQUEMENT en JSON valide."""
         # PRIORITÉ: Utilise Mistral API pour générer du vrai code créatif
         print(f"   💻 Génération code avec Mistral API...")
         
-        code_prompt = f"""Tu es un expert Three.js. Génère du code JavaScript créatif et détaillé pour: "{prompt}"
+        code_prompt = f"""Tu es un expert Three.js. Génère UNIQUEMENT du code pour ajouter des objets 3D à une scène EXISTANTE.
+
+CONTEXTE IMPORTANT:
+La scène Three.js existe déjà avec:
+- studio.scene (scène principale)
+- studio.camera (caméra)
+- studio.renderer (rendu)
+- studio.controls (OrbitControls)
+
+NE CRÉE PAS de nouveau Scene, Camera, Renderer, ou OrbitControls!
+
+REQUÊTE: "{prompt}"
 
 ANALYSE:
 - Type: {analysis.get('object_type', 'object')}
@@ -171,7 +182,7 @@ EXIGENCES CRÉATIVES:
 - THREE.TorusGeometry(radius, tube, radialSegments, tubularSegments)
 - THREE.PlaneGeometry(width, height)
 
-❌ N'UTILISE PAS: TriangleFanGeometry, .fromPoints(), BufferGeometry.fromPoints(), ou toute autre API non-standard.
+❌ N'UTILISE PAS: TriangleFanGeometry, .fromPoints(), BufferGeometry.fromPoints(), Scene(), Camera(), Renderer(), OrbitControls(), ou toute autre API non-standard.
 
 GÉNÈRE 30-50 LIGNES DE CODE MINIMUM, CRÉATIF ET DÉTAILLÉ. CODE UNIQUEMENT, PAS DE MARKDOWN NI ```javascript:"""
 

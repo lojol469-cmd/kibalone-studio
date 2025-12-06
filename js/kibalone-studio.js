@@ -251,13 +251,25 @@ class KibaloneStudio {
                 cleanCode = cleanCode.replace(/```js\n?/g, '');
                 cleanCode = cleanCode.replace(/```\n?/g, '');
                 
-                // Retire uniquement les lignes qui sont ENTIÈREMENT des commentaires
+                // Retire les lignes qui créent une nouvelle scène (on utilise celle existante)
                 cleanCode = cleanCode.split('\n')
                     .filter(line => {
                         const trimmed = line.trim();
-                        return trimmed.length === 0 || !trimmed.startsWith('//');
+                        // Retire les commentaires seuls
+                        if (trimmed.startsWith('//')) return false;
+                        // Retire les lignes qui créent Scene, Camera, Renderer, Controls
+                        if (trimmed.includes('new THREE.Scene()')) return false;
+                        if (trimmed.includes('new THREE.PerspectiveCamera')) return false;
+                        if (trimmed.includes('new THREE.WebGLRenderer')) return false;
+                        if (trimmed.includes('new THREE.OrbitControls')) return false;
+                        if (trimmed.includes('renderer.setSize')) return false;
+                        if (trimmed.includes('document.body.appendChild')) return false;
+                        return trimmed.length === 0 || true;
                     })
                     .join('\n');
+                
+                // Remplace scene.add par studio.scene.add si oublié
+                cleanCode = cleanCode.replace(/\bscene\.add\(/g, 'studio.scene.add(');
                 
                 // Vérifie que le code contient les éléments essentiels
                 if (!cleanCode.includes('THREE.')) {
