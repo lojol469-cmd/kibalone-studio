@@ -20,7 +20,7 @@ echo -e "${MAGENTA}🧠 Kibali Orchestrator${NC} - IA pour génération 3D par c
 echo -e "${BLUE}💻 CodeLlama + Mistral${NC} - Génération procédurale intelligente"
 echo ""
 
-cd /home/belikan/Isol/Meshy
+cd /home/belikan/Isol/Kibalone-Studio
 
 # Vérification et installation des dépendances
 echo -e "${YELLOW}📦 Vérification des dépendances...${NC}"

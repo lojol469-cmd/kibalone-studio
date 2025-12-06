@@ -1,7 +1,7 @@
 #!/bin/bash
 # Lance Kibalone Studio en mode DAEMON (arrière-plan permanent)
 
-cd /home/belikan/Isol/Meshy
+cd /home/belikan/Isol/Kibalone-Studio
 
 # Couleurs
 GREEN='\033[0;32m'

@@ -126,7 +126,7 @@ class RealisticModelGenerator:
         
         # 3. Sauvegarde le mesh
         if output_path is None:
-            output_path = "/home/belikan/Isol/Meshy/meshes/generated_model.obj"
+            output_path = "/home/belikan/Isol/Kibalone-Studio/meshes/generated_model.obj"
         
         mesh.export(output_path)
         print(f"✅ Modèle 3D sauvegardé: {output_path}")
@@ -140,17 +140,17 @@ class RealisticModelGenerator:
     def generate_character(self, description):
         """Génère un personnage réaliste"""
         prompt = f"3D render of {description}, high quality, detailed, professional 3d model, clean background"
-        return self.text_to_3d(prompt, f"/home/belikan/Isol/Meshy/meshes/character_{hash(description)}.obj")
+        return self.text_to_3d(prompt, f"/home/belikan/Isol/Kibalone-Studio/meshes/character_{hash(description)}.obj")
     
     def generate_environment(self, description):
         """Génère un environnement"""
         prompt = f"3D environment scene of {description}, high quality, detailed architecture, professional 3d rendering"
-        return self.text_to_3d(prompt, f"/home/belikan/Isol/Meshy/meshes/environment_{hash(description)}.obj")
+        return self.text_to_3d(prompt, f"/home/belikan/Isol/Kibalone-Studio/meshes/environment_{hash(description)}.obj")
     
     def generate_object(self, description):
         """Génère un objet"""
         prompt = f"3D model of {description}, high quality, detailed object, product photography style"
-        return self.text_to_3d(prompt, f"/home/belikan/Isol/Meshy/meshes/object_{hash(description)}.obj")
+        return self.text_to_3d(prompt, f"/home/belikan/Isol/Kibalone-Studio/meshes/object_{hash(description)}.obj")
 
 
 # ============================================

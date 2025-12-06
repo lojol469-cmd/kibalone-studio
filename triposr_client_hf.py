@@ -11,7 +11,7 @@ from pathlib import Path
 class TripoSRClientHF:
     """Client pour le service TripoSR via HuggingFace API"""
     
-    def __init__(self, service_path="/home/belikan/Isol/Meshy/triposr_service_hf.py"):
+    def __init__(self, service_path="/home/belikan/Isol/Kibalone-Studio/triposr_service_hf.py"):
         self.service_path = service_path
         self.process = None
     

@@ -22,7 +22,7 @@ def check_api_health():
     except Exception as e:
         print(f"❌ API non disponible: {e}")
         print("\nLancez l'API avec:")
-        print("   cd /home/belikan/Isol/Meshy")
+        print("   cd /home/belikan/Isol/Kibalone-Studio")
         print("   ./start_kibalone_full.sh")
         return False
 
@@ -141,7 +141,7 @@ def main():
         sys.exit(1)
     
     # Dossier de test
-    test_dir = Path("/home/belikan/Isol/Meshy/test_images")
+    test_dir = Path("/home/belikan/Isol/Kibalone-Studio/test_images")
     
     if test_dir.exists():
         print(f"\n📂 Utilisation du dossier: {test_dir}")

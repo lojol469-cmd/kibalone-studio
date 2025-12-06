@@ -22,7 +22,7 @@ cleanup() {
 
 trap cleanup SIGINT SIGTERM
 
-cd /home/belikan/Isol/Meshy
+cd /home/belikan/Isol/Kibalone-Studio
 
 # 1. Démarre l'API Kibali (légère, juste Flask)
 echo -e "${BLUE}1️⃣  Démarrage de l'API Kibali...${NC}"

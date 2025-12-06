@@ -3,7 +3,7 @@
 
 echo "🚀 Démarrage de l'API TripoSR..."
 
-cd /home/belikan/Isol/Meshy
+cd /home/belikan/Isol/Kibalone-Studio
 
 # Active l'environnement conda si nécessaire
 if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then

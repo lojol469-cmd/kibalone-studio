@@ -140,13 +140,13 @@ echo ""
 echo "🔗 Configuration Isol Framework..."
 
 # Copier les modules vers Meshy si pas déjà fait
-if [ ! -f "/home/belikan/Isol/Meshy/point_cloud_fusion.py" ]; then
-    cp /home/belikan/Isol/MidasApi/point_cloud_fusion.py /home/belikan/Isol/Meshy/
+if [ ! -f "/home/belikan/Isol/Kibalone-Studio/point_cloud_fusion.py" ]; then
+    cp /home/belikan/Isol/MidasApi/point_cloud_fusion.py /home/belikan/Isol/Kibalone-Studio/
     log_info "point_cloud_fusion.py copié"
 fi
 
-if [ ! -f "/home/belikan/Isol/Meshy/depth_enhancement.py" ]; then
-    cp /home/belikan/Isol/MidasApi/depth_enhancement.py /home/belikan/Isol/Meshy/
+if [ ! -f "/home/belikan/Isol/Kibalone-Studio/depth_enhancement.py" ]; then
+    cp /home/belikan/Isol/MidasApi/depth_enhancement.py /home/belikan/Isol/Kibalone-Studio/
     log_info "depth_enhancement.py copié"
 fi
 
@@ -154,7 +154,7 @@ fi
 echo ""
 echo "🧪 Test de l'API MiDaS Multi-View..."
 
-cd /home/belikan/Isol/Meshy
+cd /home/belikan/Isol/Kibalone-Studio
 
 # Tester l'import des modules
 python3 -c "
@@ -185,13 +185,13 @@ echo "   • OpenCV: $(python3 -c 'import cv2; print(cv2.__version__)')"
 echo "   • Flask: $(python3 -c 'import flask; print(flask.__version__)')"
 echo ""
 echo "🚀 Pour démarrer le système:"
-echo "   cd /home/belikan/Isol/Meshy"
+echo "   cd /home/belikan/Isol/Kibalone-Studio"
 echo "   ./start_kibalone_full.sh"
 echo ""
 echo "🧪 Pour tester la reconstruction 3D:"
-echo "   cd /home/belikan/Isol/Meshy"
+echo "   cd /home/belikan/Isol/Kibalone-Studio"
 echo "   ./run_test_reconstruction.sh"
 echo ""
 echo "📚 Documentation:"
-echo "   /home/belikan/Isol/Meshy/README_RECONSTRUCTION_3D.md"
+echo "   /home/belikan/Isol/Kibalone-Studio/README_RECONSTRUCTION_3D.md"
 echo ""

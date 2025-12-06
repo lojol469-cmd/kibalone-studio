@@ -8,7 +8,7 @@ echo "🚀 INSTALLATION MIDAS MULTI-VIEW POUR KIBALONE"
 echo "=============================================="
 echo ""
 
-cd /home/belikan/Isol/Meshy
+cd /home/belikan/Isol/Kibalone-Studio
 
 # 1. Activer conda
 echo "📦 Activation de Conda..."
@@ -204,7 +204,7 @@ echo ""
 echo "📚 Prochaines étapes:"
 echo ""
 echo "1. Lancer Kibalone Studio:"
-echo "   cd /home/belikan/Isol/Meshy"
+echo "   cd /home/belikan/Isol/Kibalone-Studio"
 echo "   ./start_kibalone_full.sh"
 echo ""
 echo "2. Ouvrir l'interface:"

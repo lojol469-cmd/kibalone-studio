@@ -63,7 +63,7 @@ class TripoSRSimple:
         mesh = self.create_character_mesh(avg_color)
         
         if output_path is None:
-            output_path = f"/home/belikan/Isol/Meshy/meshes/triposr_{hash(image_path) % 100000}.obj"
+            output_path = f"/home/belikan/Isol/Kibalone-Studio/meshes/triposr_{hash(image_path) % 100000}.obj"
         
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         mesh.export(output_path)
@@ -163,7 +163,7 @@ class TripoSRSimple:
     
     def generate_from_prompt(self, prompt, model_type='character'):
         """Interface compatible avec le reste du système"""
-        output_path = f"/home/belikan/Isol/Meshy/meshes/triposr_{model_type}_{hash(prompt) % 100000}.obj"
+        output_path = f"/home/belikan/Isol/Kibalone-Studio/meshes/triposr_{model_type}_{hash(prompt) % 100000}.obj"
         return self.text_to_3d(prompt, output_path)
 
 

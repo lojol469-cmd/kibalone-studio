@@ -7,7 +7,7 @@
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🧪 TEST 1: Orchestrateur seul (plan uniquement)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-python3 /home/belikan/Isol/Meshy/kibali_orchestrator.py
+python3 /home/belikan/Isol/Kibalone-Studio/kibali_orchestrator.py
 
 echo ""
 echo ""

@@ -10,7 +10,7 @@ import time
 import sys
 
 # Répertoire des images de test (Château de Sceaux)
-TEST_IMAGES_DIR = Path("/home/belikan/Isol/Meshy/static/assets/test_images")
+TEST_IMAGES_DIR = Path("/home/belikan/Isol/Kibalone-Studio/static/assets/test_images")
 
 def get_test_photos():
     """Récupère les 11 photos du château"""
@@ -31,7 +31,7 @@ def get_test_photos():
 
 def save_default_mesh_path(mesh_path):
     """Sauvegarde le chemin du mesh pour le frontend"""
-    config_file = Path("/home/belikan/Isol/Meshy/demo_config.json")
+    config_file = Path("/home/belikan/Isol/Kibalone-Studio/demo_config.json")
     
     import json
     config = {
@@ -57,7 +57,7 @@ def main():
     
     if not photo_paths:
         print("\n❌ Aucune photo disponible")
-        print("   Vérifiez: /home/belikan/Isol/Meshy/static/assets/test_images/")
+        print("   Vérifiez: /home/belikan/Isol/Kibalone-Studio/static/assets/test_images/")
         return
     
     # 2. Reconstruction batch directe
@@ -85,7 +85,7 @@ def reconstruct_batch_direct(photo_paths):
     """Reconstruction batch directe via MiDaS client"""
     print(f"   📸 {len(photo_paths)} photos → Mesh 3D...")
     
-    output_path = "/home/belikan/Isol/Meshy/outputs/midas_demo.obj"
+    output_path = "/home/belikan/Isol/Kibalone-Studio/outputs/midas_demo.obj"
     
     try:
         # Import du client MiDaS

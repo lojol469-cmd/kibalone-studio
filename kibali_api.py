@@ -574,7 +574,7 @@ def launch_demo():
         from midas_client import MiDaSClient
         
         # Photos du château
-        photos_dir = Path("/home/belikan/Isol/Meshy/static/assets/test_images")
+        photos_dir = Path("/home/belikan/Isol/Kibalone-Studio/static/assets/test_images")
         photos = sorted(photos_dir.glob("image_*.jpg"))[:num_photos]
         
         if not photos:
@@ -598,7 +598,7 @@ def launch_demo():
             }), 500
         
         # Reconstruction
-        output_path = "/home/belikan/Isol/Meshy/outputs/chateau_demo.obj"
+        output_path = "/home/belikan/Isol/Kibalone-Studio/outputs/chateau_demo.obj"
         print(f"   🔮 Reconstruction → {output_path}")
         
         result = client.reconstruct_batch(
@@ -620,8 +620,8 @@ def launch_demo():
         print(f"   ✅ Mesh: {vertices} vertices, {triangles} triangles")
         
         # Convertit le chemin absolu en chemin relatif pour le frontend
-        # /home/belikan/Isol/Meshy/outputs/chateau_demo.obj → /outputs/chateau_demo.obj
-        relative_mesh_path = mesh_path.replace('/home/belikan/Isol/Meshy', '')
+        # /home/belikan/Isol/Kibalone-Studio/outputs/chateau_demo.obj → /outputs/chateau_demo.obj
+        relative_mesh_path = mesh_path.replace('/home/belikan/Isol/Kibalone-Studio', '')
         
         # Génère code Three.js pour charger le mesh
         threejs_code = f"""
@@ -774,7 +774,7 @@ def upload_reconstruct():
         
         # Reconstruction
         output_filename = f"reconstruction_{timestamp}.obj"
-        output_path = f"/home/belikan/Isol/Meshy/outputs/{output_filename}"
+        output_path = f"/home/belikan/Isol/Kibalone-Studio/outputs/{output_filename}"
         print(f"   🔮 Reconstruction → {output_path}")
         
         result = client.reconstruct_batch(

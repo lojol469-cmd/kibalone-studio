@@ -4,7 +4,7 @@ Test rapide de TripoSR pour vérifier que tout fonctionne
 """
 
 import sys
-sys.path.insert(0, '/home/belikan/Isol/Meshy')
+sys.path.insert(0, '/home/belikan/Isol/Kibalone-Studio')
 
 from realistic_generator import RealisticModelGenerator
 import os

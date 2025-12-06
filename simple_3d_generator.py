@@ -192,7 +192,7 @@ class Simple3DGenerator:
         
         # Sauvegarde
         if output_path is None:
-            output_path = f"/home/belikan/Isol/Meshy/meshes/generated_{hash(prompt) % 100000}.obj"
+            output_path = f"/home/belikan/Isol/Kibalone-Studio/meshes/generated_{hash(prompt) % 100000}.obj"
         
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         mesh.export(output_path)
@@ -206,17 +206,17 @@ class Simple3DGenerator:
     def generate_character(self, description):
         """Génère un personnage"""
         prompt = f"character {description}"
-        return self.text_to_3d(prompt, f"/home/belikan/Isol/Meshy/meshes/character_{hash(description) % 100000}.obj")
+        return self.text_to_3d(prompt, f"/home/belikan/Isol/Kibalone-Studio/meshes/character_{hash(description) % 100000}.obj")
     
     def generate_environment(self, description):
         """Génère un environnement"""
         prompt = f"environment {description}"
-        return self.text_to_3d(prompt, f"/home/belikan/Isol/Meshy/meshes/environment_{hash(description) % 100000}.obj")
+        return self.text_to_3d(prompt, f"/home/belikan/Isol/Kibalone-Studio/meshes/environment_{hash(description) % 100000}.obj")
     
     def generate_object(self, description):
         """Génère un objet"""
         prompt = f"object {description}"
-        return self.text_to_3d(prompt, f"/home/belikan/Isol/Meshy/meshes/object_{hash(description) % 100000}.obj")
+        return self.text_to_3d(prompt, f"/home/belikan/Isol/Kibalone-Studio/meshes/object_{hash(description) % 100000}.obj")
 
 
 # ============================================

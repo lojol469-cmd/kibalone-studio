@@ -5,7 +5,7 @@ echo "🏰 TEST RECONSTRUCTION 3D - CHÂTEAU DE SCEAUX"
 echo "=" 
 echo ""
 
-cd /home/belikan/Isol/Meshy
+cd /home/belikan/Isol/Kibalone-Studio
 
 # Vérifier que les images sont présentes
 if [ ! -d "test_images" ] || [ $(ls test_images/*.jpg 2>/dev/null | wc -l) -lt 10 ]; then

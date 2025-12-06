@@ -12,7 +12,7 @@ from pathlib import Path
 class TripoSRClient:
     """Client pour communiquer avec le service TripoSR isolé"""
     
-    def __init__(self, service_path="/home/belikan/Isol/Meshy/triposr_service.py"):
+    def __init__(self, service_path="/home/belikan/Isol/Kibalone-Studio/triposr_service.py"):
         self.service_path = service_path
         self.process = None
     
@@ -133,7 +133,7 @@ if __name__ == '__main__':
     
     if result.get('success'):
         # 2. Test avec une image (si disponible)
-        test_image = "/home/belikan/Isol/Meshy/test_images/cube.png"
+        test_image = "/home/belikan/Isol/Kibalone-Studio/test_images/cube.png"
         
         if Path(test_image).exists():
             print(f"2️⃣ Conversion de {test_image}...")
