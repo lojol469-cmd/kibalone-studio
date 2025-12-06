@@ -251,13 +251,16 @@ class KibaloneStudio {
                 cleanCode = cleanCode.replace(/```js\n?/g, '');
                 cleanCode = cleanCode.replace(/```\n?/g, '');
                 
-                // Retire les commentaires qui peuvent casser la syntaxe
+                // Retire uniquement les lignes qui sont ENTIÈREMENT des commentaires
                 cleanCode = cleanCode.split('\n')
-                    .filter(line => !line.trim().startsWith('//'))
+                    .filter(line => {
+                        const trimmed = line.trim();
+                        return trimmed.length === 0 || !trimmed.startsWith('//');
+                    })
                     .join('\n');
                 
                 // Vérifie que le code contient les éléments essentiels
-                if (!cleanCode.includes('THREE.') || !cleanCode.includes('studio.scene')) {
+                if (!cleanCode.includes('THREE.')) {
                     throw new Error('Code généré invalide (pas de Three.js détecté)');
                 }
                 
