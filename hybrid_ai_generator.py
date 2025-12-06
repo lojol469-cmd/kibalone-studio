@@ -163,6 +163,16 @@ EXIGENCES CRÉATIVES:
 7. Ajoute le groupe: studio.scene.add(group);
 8. Log final: addLog('✅ {prompt} créé avec [nombre] éléments');
 
+⚠️ GÉOMÉTRIES VALIDES UNIQUEMENT:
+- THREE.BoxGeometry(width, height, depth)
+- THREE.SphereGeometry(radius, widthSegments, heightSegments)
+- THREE.CylinderGeometry(radiusTop, radiusBottom, height, radialSegments)
+- THREE.ConeGeometry(radius, height, radialSegments)
+- THREE.TorusGeometry(radius, tube, radialSegments, tubularSegments)
+- THREE.PlaneGeometry(width, height)
+
+❌ N'UTILISE PAS: TriangleFanGeometry, .fromPoints(), BufferGeometry.fromPoints(), ou toute autre API non-standard.
+
 GÉNÈRE 30-50 LIGNES DE CODE MINIMUM, CRÉATIF ET DÉTAILLÉ. CODE UNIQUEMENT, PAS DE MARKDOWN NI ```javascript:"""
 
         try:
