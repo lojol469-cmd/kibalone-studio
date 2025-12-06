@@ -86,6 +86,9 @@ from ai_procedural_3d import generate_3d_by_ai, generate_animation_by_ai, genera
 # 🚀 NOUVEAU: Générateur HYBRIDE Mistral + CodeLlama
 from hybrid_ai_generator import generate_hybrid_3d, init_hybrid_generator, fix_broken_code
 
+# 🖼️ NOUVEAU: Analyseur d'images (CLIP + OCR + YOLO)
+from image_analyzer_api import init_analyzer
+
 # Import du générateur AVANCÉ avec multi-méthodes
 from advanced_3d_generator import generate_advanced_3d
 
@@ -233,6 +236,66 @@ def health_check():
         'version': '1.0',
         'model': current_model
     })
+
+@app.route('/api/analyze-image', methods=['POST'])
+def analyze_image():
+    """
+    Analyse une image de référence avec CLIP + OCR + YOLO
+    
+    Body: {
+        "image": "data:image/png;base64,..." ou base64 direct,
+        "context": "reference" (optionnel)
+    }
+    
+    Returns: {
+        "success": true,
+        "analysis": {
+            "description": "vehicle (confidence: 0.95)",
+            "objects": [{class: "car", confidence: 0.89, bbox: [...]}],
+            "text": [{text: "BMW", confidence: 0.92, bbox: [...]}],
+            "colors": ["#ff0000", "#000000", "#ffffff"],
+            "style": "realistic photo",
+            "dimensions": {width: 800, height: 600}
+        }
+    }
+    """
+    try:
+        data = request.json
+        image_data = data.get('image', '')
+        
+        if not image_data:
+            return jsonify({
+                'success': False,
+                'error': 'No image provided'
+            }), 400
+        
+        print(f"🖼️  Analyse d'image de référence...")
+        
+        # Initialise l'analyseur si nécessaire
+        analyzer = init_analyzer()
+        
+        # Analyse l'image
+        analysis = analyzer.analyze_image(image_data)
+        
+        print(f"✅ Analyse terminée:")
+        print(f"   Description: {analysis['description']}")
+        print(f"   Objets détectés: {len(analysis['objects'])}")
+        print(f"   Texte trouvé: {len(analysis['text'])}")
+        print(f"   Couleurs: {analysis['colors']}")
+        
+        return jsonify({
+            'success': True,
+            'analysis': analysis
+        })
+        
+    except Exception as e:
+        print(f"❌ Erreur analyse image: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 @app.route('/api/chat', methods=['POST'])
 def chat():

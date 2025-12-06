@@ -586,6 +586,23 @@
                 </div>
             </div>
             <div class="chat-input-container">
+                <!-- Upload d'image de référence -->
+                <div class="reference-image-section" id="reference-section" style="display: none; margin-bottom: 10px;">
+                    <div class="reference-preview" id="reference-preview">
+                        <img id="reference-img" style="max-width: 100%; max-height: 150px; border-radius: 8px;">
+                        <button onclick="clearReferenceImage()" style="position: absolute; top: 5px; right: 5px; background: rgba(255,0,0,0.8); color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer;">✕</button>
+                    </div>
+                    <div class="reference-info" id="reference-info" style="font-size: 11px; color: #00d4ff; margin-top: 5px;"></div>
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <input type="file" id="image-upload" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+                    <button onclick="document.getElementById('image-upload').click()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 5px;">
+                        🖼️ Upload Image Référence
+                    </button>
+                    <span id="upload-hint" style="font-size: 11px; color: #888;">L'IA générera le modèle 3D basé sur votre image</span>
+                </div>
+                
                 <textarea 
                     class="chat-input" 
                     id="chat-input" 

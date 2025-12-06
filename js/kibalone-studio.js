@@ -220,6 +220,13 @@ class KibaloneStudio {
         addLog(`📨 Requête utilisateur: "${prompt}"`);
 
         try {
+            // 🖼️ Enrichit le prompt avec l'analyse d'image si disponible
+            let enrichedPrompt = prompt;
+            if (referenceAnalysis) {
+                enrichedPrompt = `[IMAGE DE RÉFÉRENCE: ${referenceAnalysis.description}, Style: ${referenceAnalysis.style}, Couleurs: ${referenceAnalysis.colors.join(', ')}] ${prompt}`;
+                addLog(`🖼️ Utilisation de l'image de référence pour guider la génération`);
+            }
+            
             // 🚀 NOUVEAU: Utilise uniquement le générateur HYBRIDE de code
             addLog('🧠 [Mistral] Analyse de la requête...');
             addLog('💻 [CodeLlama] Génération du code Three.js...');
@@ -228,6 +235,12 @@ class KibaloneStudio {
             const response = await fetch('http://localhost:11000/api/generate-model', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    prompt: enrichedPrompt,
+                    type: 'object',
+                    reference_image: referenceAnalysis || null
+                })
+            });
                 body: JSON.stringify({ 
                     prompt: prompt,
                     type: 'object' // character/object/environment
@@ -1828,6 +1841,84 @@ document.addEventListener('click', (e) => {
         closeTutorial();
     }
 });
+
+// ============================================
+// IMAGE RÉFÉRENCE - Upload et Analyse
+// ============================================
+
+let referenceImage = null;
+let referenceAnalysis = null;
+
+async function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    addLog(`🖼️ Upload de l'image: ${file.name}...`);
+    
+    // Affiche la preview
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        const imageData = e.target.result;
+        
+        // Affiche l'image
+        document.getElementById('reference-img').src = imageData;
+        document.getElementById('reference-section').style.display = 'block';
+        document.getElementById('upload-hint').textContent = 'Analyse en cours...';
+        
+        // Analyse l'image via API
+        try {
+            const response = await fetch('http://localhost:11000/api/analyze-image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: imageData })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                referenceImage = imageData;
+                referenceAnalysis = result.analysis;
+                
+                addLog(`✅ Image analysée: ${result.analysis.description}`);
+                addLog(`   Objets: ${result.analysis.objects.map(o => o.class).join(', ') || 'aucun'}`);
+                addLog(`   Couleurs: ${result.analysis.colors.join(', ')}`);
+                
+                // Affiche l'info
+                const infoDiv = document.getElementById('reference-info');
+                infoDiv.innerHTML = `
+                    <strong>Analyse:</strong> ${result.analysis.description}<br>
+                    <strong>Style:</strong> ${result.analysis.style}<br>
+                    <strong>Couleurs:</strong> ${result.analysis.colors.slice(0, 3).map(c => `<span style="display:inline-block;width:15px;height:15px;background:${c};border:1px solid #333;border-radius:3px;"></span>`).join(' ')}
+                `;
+                
+                document.getElementById('upload-hint').textContent = '✅ Image de référence prête';
+                addChatMessage('ai', `🖼️ Image analysée! Je vais créer un modèle 3D basé sur: ${result.analysis.description}. Tapez votre demande!`);
+            } else {
+                addLog(`❌ Erreur analyse: ${result.error}`);
+                document.getElementById('upload-hint').textContent = '❌ Erreur analyse';
+            }
+            
+        } catch (error) {
+            console.error('Erreur upload:', error);
+            addLog(`❌ Erreur connexion API: ${error.message}`);
+            document.getElementById('upload-hint').textContent = '❌ Erreur connexion API';
+        }
+    };
+    
+    reader.readAsDataURL(file);
+}
+
+function clearReferenceImage() {
+    referenceImage = null;
+    referenceAnalysis = null;
+    document.getElementById('reference-section').style.display = 'none';
+    document.getElementById('upload-hint').textContent = 'L\'IA générera le modèle 3D basé sur votre image';
+    addLog('🗑️ Image de référence supprimée');
+}
+
+// ============================================
+// INITIALISATION
+// ============================================
 
 // Initialize
 let studio;
