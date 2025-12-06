@@ -1,0 +1,9 @@
+{
+  "default_mesh": "/home/belikan/Isol/Meshy/outputs/chateau_test.obj",
+  "demo_mode": true,
+  "created_at": "2025-12-06 20:25:00",
+  "source": "MiDaS Photogrammetrie",
+  "dataset": "Château de Sceaux (3 photos test)",
+  "vertices": 145703,
+  "triangles": 290591
+}

@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kibalone Studio - 3D Animation by AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            overflow: hidden;
+        }
+
+        /* Layout Principal */
+        .container {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            grid-template-rows: 60px 1fr 180px;
+            height: 100vh;
+            gap: 2px;
+            background: #0f0f1e;
+        }
+
+        /* Header */
+        .header {
+            grid-column: 1 / -1;
+            background: linear-gradient(90deg, #1a1a2e 0%, #2d4059 100%);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            background: linear-gradient(45deg, #00d4ff, #7b2cbf);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo::before {
+            content: "✨";
+            font-size: 28px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        /* Panneau Gauche - Outils */
+        .left-panel {
+            background: #1a1a2e;
+            padding: 15px;
+            overflow-y: auto;
+            border-right: 1px solid #2d4059;
+        }
+
+        .panel-section {
+            margin-bottom: 20px;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #00d4ff;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .tool-btn {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #2d4059;
+            border: 1px solid #3d5a80;
+            border-radius: 6px;
+            color: #e0e0e0;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        .tool-btn:hover {
+            background: #3d5a80;
+            border-color: #00d4ff;
+            transform: translateX(5px);
+        }
+
+        .tool-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+        }
+
+        /* Viewport 3D */
+        .viewport {
+            background: #0f0f1e;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #canvas3d {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .viewport-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .viewport-controls {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+
+        .viewport-btn {
+            padding: 8px 12px;
+            background: rgba(0, 212, 255, 0.2);
+            border: 1px solid #00d4ff;
+            border-radius: 6px;
+            color: #00d4ff;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+
+        .viewport-btn:hover {
+            background: rgba(0, 212, 255, 0.4);
+        }
+
+        /* Panneau Droit - Chat IA */
+        .right-panel {
+            background: #1a1a2e;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid #2d4059;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 15px;
+            background: #2d4059;
+            border-bottom: 1px solid #3d5a80;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chat-header h3 {
+            color: #00d4ff;
+            font-size: 16px;
+        }
+
+        .ai-status {
+            width: 10px;
+            height: 10px;
+            background: #00ff88;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-height: 0;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            max-width: 90%;
+            animation: slideIn 0.3s ease;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+        
+        .message div {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
+        }
+        
+        .message small {
+            display: block;
+            margin-top: 8px;
+            opacity: 0.8;
+            font-size: 12px;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            align-self: flex-end;
+        }
+
+        .message.ai {
+            background: #2d4059;
+            align-self: flex-start;
+            border-left: 3px solid #00d4ff;
+        }
+
+        .message-time {
+            font-size: 10px;
+            opacity: 0.6;
+            margin-top: 5px;
+        }
+
+        .chat-input-container {
+            padding: 15px;
+            background: #2d4059;
+            border-top: 1px solid #3d5a80;
+            flex-shrink: 0;
+        }
+
+        .chat-input {
+            width: 100%;
+            padding: 12px;
+            background: #1a1a2e;
+            border: 1px solid #3d5a80;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 60px;
+            max-height: 120px;
+            resize: none;
+            font-family: inherit;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #00d4ff;
+        }
+
+        .quick-prompts {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+            max-height: 80px;
+            overflow-y: auto;
+        }
+
+        .quick-prompt {
+            padding: 5px 10px;
+            background: #3d5a80;
+            border: 1px solid #4a7095;
+            border-radius: 15px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .quick-prompt:hover {
+            background: #4a7095;
+            border-color: #00d4ff;
+        }
+
+        /* Timeline */
+        .timeline {
+            grid-column: 1 / -1;
+            background: #1a1a2e;
+            border-top: 1px solid #2d4059;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .timeline-header {
+            padding: 10px 15px;
+            background: #2d4059;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .timeline-title {
+            color: #00d4ff;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .timeline-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .play-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: transform 0.2s;
+        }
+
+        .play-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .timeline-range {
+            flex: 1;
+            margin: 0 20px;
+        }
+
+        .timeline-slider {
+            width: 100%;
+            height: 4px;
+            background: #3d5a80;
+            border-radius: 2px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .timeline-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.1s;
+        }
+
+        .timeline-tracks {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        .track {
+            height: 40px;
+            background: #2d4059;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            position: relative;
+        }
+
+        .track-label {
+            width: 120px;
+            font-size: 12px;
+            color: #00d4ff;
+        }
+
+        .track-content {
+            flex: 1;
+            height: 100%;
+            position: relative;
+            background: #1a1a2e;
+            border-radius: 4px;
+        }
+
+        .keyframe {
+            width: 10px;
+            height: 100%;
+            background: #f5576c;
+            position: absolute;
+            cursor: move;
+            transition: width 0.2s;
+        }
+
+        .keyframe:hover {
+            width: 15px;
+            background: #ff6b81;
+        }
+
+        /* Scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1a2e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #3d5a80;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4a7095;
+        }
+
+        /* Tooltips */
+        .tooltip {
+            position: relative;
+        }
+
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            font-size: 11px;
+            border-radius: 4px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip:hover::after {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">KIBALONE STUDIO</div>
+            <div class="header-actions">
+                <button class="btn" onclick="showTutorial()">📖 Tutoriel</button>
+                <button class="btn btn-success" onclick="saveProject()">💾 Save</button>
+                <button class="btn" onclick="exportScene()">📤 Export</button>
+                <button class="btn btn-primary" onclick="renderVideo()">🎬 Render</button>
+            </div>
+        </header>
+
+        <!-- Left Panel - Tools -->
+        <aside class="left-panel">
+            <div class="panel-section">
+                <div class="panel-title">🎨 Création</div>
+                <button class="tool-btn" onclick="aiPrompt('Créer un modèle')">➕ Nouveau Modèle (AI)</button>
+                <button class="tool-btn" onclick="aiPrompt('Créer un personnage')">👤 Personnage (AI)</button>
+                <button class="tool-btn" onclick="aiPrompt('Créer un environnement')">🌍 Environnement (AI)</button>
+                <button class="tool-btn" onclick="aiPrompt('Créer un objet')">📦 Objet (AI)</button>
+            </div>
+
+            <div class="panel-section">
+                <div class="panel-title">🎭 Style</div>
+                <button class="tool-btn" onclick="aiPrompt('Style réaliste')">🎨 Réaliste</button>
+                <button class="tool-btn" onclick="aiPrompt('Style cartoon')">🎪 Cartoon</button>
+                <button class="tool-btn" onclick="aiPrompt('Style low-poly')">🔷 Low-Poly</button>
+                <button class="tool-btn" onclick="aiPrompt('Style cyberpunk')">🌃 Cyberpunk</button>
+            </div>
+
+            <div class="panel-section">
+                <div class="panel-title">🎥 Caméra</div>
+                <button class="tool-btn" onclick="aiPrompt('Positionner la caméra')">📹 Position (AI)</button>
+                <button class="tool-btn" onclick="aiPrompt('Animer la caméra')">🎬 Animation (AI)</button>
+                <button class="tool-btn" onclick="aiPrompt('Vue orbite')">🔄 Vue Orbite</button>
+                <button class="tool-btn" onclick="aiPrompt('Vue FPS')">👁️ Vue FPS</button>
+            </div>
+
+            <div class="panel-section">
+                <div class="panel-title">✨ Animation</div>
+                <button class="tool-btn" onclick="aiPrompt('Animer cet objet')">▶️ Animer (AI)</button>
+                <button class="tool-btn" onclick="aiPrompt('Ajouter mouvement organique')">🌊 Mouvement Organique</button>
+                <button class="tool-btn" onclick="aiPrompt('Créer keyframes')">⭐ Keyframes (AI)</button>
+                <button class="tool-btn" onclick="aiPrompt('Appliquer physique')">⚡ Physique (AI)</button>
+            </div>
+
+            <div class="panel-section">
+                <div class="panel-title">💡 Éclairage</div>
+                <button class="tool-btn" onclick="aiPrompt('Ajouter lumière')">💡 Lumière (AI)</button>
+                <button class="tool-btn" onclick="aiPrompt('Ambiance dramatique')">🎭 Ambiance (AI)</button>
+                <button class="tool-btn" onclick="aiPrompt('Éclairage naturel')">☀️ Naturel (AI)</button>
+            </div>
+
+            <div class="panel-section">
+                <div class="panel-title">🎨 Matériaux</div>
+                <button class="tool-btn" onclick="aiPrompt('Appliquer matériau')">🎨 Matériau (AI)</button>
+                <button class="tool-btn" onclick="aiPrompt('Texture procédurale')">🌀 Texture (AI)</button>
+            </div>
+        </aside>
+
+        <!-- Center - 3D Viewport -->
+        <main class="viewport">
+            <canvas id="canvas3d"></canvas>
+            <div class="viewport-overlay">
+                <div>🎯 Mode: Edition</div>
+                <div>📊 Objets: <span id="object-count">0</span></div>
+                <div>⏱️ Frame: <span id="current-frame">0</span> / <span id="total-frames">120</span></div>
+            </div>
+            <div class="viewport-controls">
+                <button class="viewport-btn tooltip" data-tooltip="Vue de face" onclick="setView('front')">Front</button>
+                <button class="viewport-btn tooltip" data-tooltip="Vue de côté" onclick="setView('side')">Side</button>
+                <button class="viewport-btn tooltip" data-tooltip="Vue du dessus" onclick="setView('top')">Top</button>
+                <button class="viewport-btn tooltip" data-tooltip="Réinitialiser" onclick="resetView()">Reset</button>
+            </div>
+        </main>
+
+        <!-- Right Panel - AI Chat -->
+        <aside class="right-panel">
+            <div class="chat-header">
+                <div class="ai-status"></div>
+                <h3>🤖 Assistant IA Kibalone</h3>
+            </div>
+            <div class="chat-messages" id="chat-messages">
+                <div class="message ai">
+                    <div>🎭 Bonjour ! Je suis Kibali, votre orchestrateur IA 3D.</div>
+                    <div>💡 Je comprends les demandes complexes et j'utilise 48 outils automatiquement!</div>
+                    <div>📋 Exemple: "crée un personnage qui court et saute"</div>
+                    <div class="message-time">Maintenant</div>
+                </div>
+            </div>
+            <div class="chat-input-container">
+                <textarea 
+                    class="chat-input" 
+                    id="chat-input" 
+                    placeholder="Ex: crée un personnage qui court et saute..." 
+                    rows="3"
+                    onkeydown="handleChatInput(event)"></textarea>
+                <div class="quick-prompts">
+                    <div class="quick-prompt" onclick="quickPrompt('crée un personnage qui court')">🏃 Personnage qui court</div>
+                    <div class="quick-prompt" onclick="quickPrompt('terrain de foot avec caméra 360')">⚽ Terrain + Caméra</div>
+                    <div class="quick-prompt" onclick="quickPrompt('personnage héroïque vue isométrique')">🦸 Héros ISO</div>
+                    <div class="quick-prompt" onclick="quickPrompt('environnement forêt avec animation')">🌲 Forêt animée</div>
+                    <div class="quick-prompt" onclick="quickPrompt('orbite 360')">📹 Orbite 360</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Bottom - Timeline -->
+        <section class="timeline">
+            <div class="timeline-header">
+                <div class="timeline-title">⏱️ TIMELINE</div>
+                <div class="timeline-controls">
+                    <button class="play-btn" onclick="togglePlayback()">▶️</button>
+                    <span style="font-size: 12px; color: #00d4ff;">Frame: <span id="timeline-frame">0</span></span>
+                    <div class="timeline-range">
+                        <div class="timeline-slider" onclick="seekTimeline(event)">
+                            <div class="timeline-progress" id="timeline-progress"></div>
+                        </div>
+                    </div>
+                    <span style="font-size: 12px; color: #e0e0e0;">30 FPS</span>
+                    <button class="btn" style="padding: 5px 10px; font-size: 12px;" onclick="aiPrompt('Optimise la timeline')">🤖 AI Optimize</button>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; height: calc(100% - 50px);">
+                <!-- Tracks à gauche -->
+                <div class="timeline-tracks" id="timeline-tracks" style="margin: 0;">
+                    <div class="track">
+                        <div class="track-label">🎬 Camera</div>
+                        <div class="track-content" id="track-camera"></div>
+                    </div>
+                    <div class="track">
+                        <div class="track-label">👤 Personnage</div>
+                        <div class="track-content" id="track-character"></div>
+                    </div>
+                    <div class="track">
+                        <div class="track-label">🌍 Environnement</div>
+                        <div class="track-content" id="track-environment"></div>
+                    </div>
+                </div>
+                
+                <!-- Console de logs à droite -->
+                <div style="background: rgba(0,0,0,0.5); border-radius: 8px; padding: 10px; overflow: hidden; display: flex; flex-direction: column;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <div style="color: #00d4ff; font-weight: bold;">📊 LOGS SYSTÈME</div>
+                        <button class="btn" style="padding: 3px 8px; font-size: 11px;" onclick="clearLogs()">🗑️ Clear</button>
+                    </div>
+                    <div id="console-logs" style="
+                        flex: 1;
+                        background: rgba(0,0,0,0.8);
+                        border: 1px solid rgba(0, 212, 255, 0.3);
+                        border-radius: 5px;
+                        padding: 10px;
+                        overflow-y: auto;
+                        font-family: 'Courier New', monospace;
+                        font-size: 11px;
+                        color: #a0a0a0;
+                        line-height: 1.4;
+                    "></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Modal Tutoriel -->
+        <div id="tutorial-modal" style="
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 10000;
+            overflow-y: auto;
+        ">
+            <div style="
+                max-width: 1200px;
+                margin: 50px auto;
+                background: #1a1a2e;
+                border-radius: 15px;
+                padding: 30px;
+                box-shadow: 0 10px 50px rgba(0,212,255,0.3);
+            ">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h1 style="color: #00d4ff; font-size: 32px;">🎓 TUTORIEL KIBALONE STUDIO</h1>
+                    <button onclick="closeTutorial()" style="
+                        background: none;
+                        border: 2px solid #00d4ff;
+                        color: #00d4ff;
+                        font-size: 24px;
+                        cursor: pointer;
+                        padding: 5px 15px;
+                        border-radius: 50%;
+                    ">✖</button>
+                </div>
+                
+                <div id="tutorial-content" style="color: #e0e0e0; line-height: 1.8;">
+                    <!-- Contenu sera chargé dynamiquement -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/PLYLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="js/axisWidget.js"></script>
+    <script src="js/kibalone-studio.js?v=fixed-messages-3.0"></script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+# Fichiers sensibles
+.env
+*.env
+.env.local
+*.key
+*_token.txt
+credentials.json
+
+# Fichiers lourds - Modèles 3D
+*.stl
+*.obj
+*.OBJ
+*.fbx
+*.glb
+*.gltf
+*.ply
+meshes/
+outputs/
+models/*.pth
+models/*.pt
+models/*.ckpt
+models/*.safetensors
+
+# Cache Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Logs
+*.log
+/tmp/
+logs/
+*.log.*
+
+# Environnements virtuels
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Données temporaires
+temp/
+tmp/
+cache/
+*.tmp
+*.bak
+*.backup
+
+# Modèles IA lourds (uniquement les fichiers volumineux)
+*.bin
+*.safetensors
+*.msgpack
+models/huggingface_cache/

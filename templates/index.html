@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎨 Kibalone Studio v2.0</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <h1 class="app-title">🎨 Kibalone Studio v2.0</h1>
+            <span class="status-badge" id="statusBadge">● Vérification...</span>
+        </div>
+        <div class="header-right">
+            <button class="header-button" onclick="checkBackend()">🔄 Refresh</button>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <div class="main-layout">
+        <!-- Left Panel - Chat -->
+        <aside class="left-panel">
+            <div class="panel-header">
+                <h3>💬 Kibali Chat</h3>
+                <button class="icon-button" onclick="clearChat()" title="Effacer l'historique">🗑️</button>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="empty-state">
+                    <p>👋 Salut ! Je suis Kibali.</p>
+                    <p class="hint">Essayez:</p>
+                    <ul class="hint-list">
+                        <li>"Crée un cube"</li>
+                        <li>"Dessine un cercle"</li>
+                        <li>"Reconstruction 3D"</li>
+                        <li>"Anime l'objet"</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="chat-input-container">
+                <textarea 
+                    id="chatInput" 
+                    class="chat-input" 
+                    placeholder="Écrivez votre commande..."
+                    rows="2"
+                    onkeydown="handleChatKeyDown(event)"
+                ></textarea>
+                <button class="send-button" onclick="sendMessage()">📤</button>
+            </div>
+        </aside>
+
+        <!-- Center - 3D Scene -->
+        <main class="scene-container">
+            <canvas id="scene3d"></canvas>
+            <div class="scene-overlay">
+                <div class="scene-info">
+                    <span id="objectCount">Objets: 0</span>
+                    <span>|</span>
+                    <span id="frameInfo">Frame: 0 / 250</span>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Panel - Tools -->
+        <aside class="right-panel">
+            <!-- Grease Pencil -->
+            <div class="tool-section">
+                <h4 class="section-title">✏️ Grease Pencil</h4>
+                <div class="tool-buttons">
+                    <button class="tool-button" id="drawBtn" onclick="setDrawMode('draw')" title="Dessiner">✏️</button>
+                    <button class="tool-button" id="eraseBtn" onclick="setDrawMode('erase')" title="Gomme">🧹</button>
+                    <button class="tool-button active" id="selectBtn" onclick="setDrawMode('none')" title="Sélection">👆</button>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Taille: <span id="brushSizeValue">5</span>px</label>
+                    <input type="range" class="slider" id="brushSize" min="1" max="20" value="5" oninput="updateBrushSize(this.value)">
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Couleur</label>
+                    <input type="color" class="color-picker" id="brushColor" value="#ffffff" onchange="updateBrushColor(this.value)">
+                </div>
+            </div>
+
+            <!-- 3D Reconstruction -->
+            <div class="tool-section">
+                <h4 class="section-title">🎨 Reconstruction 3D</h4>
+                <label class="upload-button">
+                    📤 Upload Images
+                    <input type="file" id="imageUpload" multiple accept="image/*" onchange="handleImageUpload(event)" style="display: none;">
+                </label>
+                <div class="progress-bar" id="uploadProgress" style="display: none;">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <!-- Animation -->
+            <div class="tool-section">
+                <h4 class="section-title">🎬 Animation</h4>
+                <div class="tool-buttons">
+                    <button class="tool-button" onclick="togglePlayPause()" id="playBtn">▶️</button>
+                    <button class="tool-button" onclick="resetFrame()">⏮️</button>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Frame: <span id="currentFrame">0</span> / 250</label>
+                    <input type="range" class="slider" id="frameSlider" min="0" max="250" value="0" oninput="setFrame(this.value)">
+                </div>
+            </div>
+
+            <!-- Scene Actions -->
+            <div class="tool-section">
+                <h4 class="section-title">🗑️ Scène</h4>
+                <button class="danger-button" onclick="clearScene()">🗑️ Clear Scene</button>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <span>Backend: http://localhost:8080</span>
+        <span>|</span>
+        <span>Three.js r128</span>
+        <span>|</span>
+        <span id="fpsCounter">FPS: 60</span>
+    </footer>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/scene.js"></script>
+    <script src="/static/js/grease-pencil.js"></script>
+    <script src="/static/js/chat.js"></script>
+    <script src="/static/js/animation.js"></script>
+    <script src="/static/js/main.js"></script>
+</body>
+</html>

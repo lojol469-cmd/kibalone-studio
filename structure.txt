@@ -1,0 +1,39 @@
+📁 Kibalone Studio - Structure Professionnelle
+==============================================
+
+/home/belikan/Isol/Meshy/
+├── index.html                    # Page d'accueil
+├── app.py                        # Serveur Flask principal
+├── config.py                     # Configuration centralisée
+├── requirements.txt              # Dépendances Python
+├── start.sh                      # Script de démarrage unique
+│
+├── static/                       # Fichiers statiques
+│   ├── css/
+│   │   └── kibalone.css         # Styles principaux
+│   ├── js/
+│   │   ├── kibalone.js          # Code principal
+│   │   ├── three-scene.js       # Gestion scene 3D
+│   │   └── api-client.js        # Client API
+│   └── assets/
+│       └── test_images/         # Images de test
+│
+├── templates/                    # Templates HTML
+│   └── studio.html              # Interface principale
+│
+├── api/                         # APIs organisées
+│   ├── __init__.py
+│   ├── routes.py                # Routes principales
+│   ├── kibali_chat.py           # Chat IA
+│   ├── midas_reconstruction.py  # Reconstruction 3D
+│   ├── triposr_3d.py           # Image → 3D
+│   └── meshy_generation.py     # Génération 3D
+│
+├── services/                    # Services métier
+│   ├── __init__.py
+│   ├── isol_client.py          # Client Isol framework
+│   └── model_manager.py        # Gestion modèles
+│
+└── logs/                        # Logs applicatifs
+    └── app.log
+
