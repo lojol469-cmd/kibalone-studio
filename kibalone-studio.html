@@ -595,12 +595,12 @@
                     <div class="reference-info" id="reference-info" style="font-size: 11px; color: #00d4ff; margin-top: 5px;"></div>
                 </div>
                 
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
                     <input type="file" id="image-upload" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
-                    <button onclick="document.getElementById('image-upload').click()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 5px;">
-                        🖼️ Upload Image Référence
+                    <button onclick="document.getElementById('image-upload').click()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 11px; white-space: nowrap;">
+                        🖼️ Image
                     </button>
-                    <span id="upload-hint" style="font-size: 11px; color: #888;">L'IA générera le modèle 3D basé sur votre image</span>
+                    <span id="upload-hint" style="font-size: 10px; color: #888; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Ref. image pour génération</span>
                 </div>
                 
                 <textarea 

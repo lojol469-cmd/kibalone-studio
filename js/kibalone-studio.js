@@ -241,11 +241,6 @@ class KibaloneStudio {
                     reference_image: referenceAnalysis || null
                 })
             });
-                body: JSON.stringify({ 
-                    prompt: prompt,
-                    type: 'object' // character/object/environment
-                })
-            });
             
             if (!response.ok) throw new Error(`API erreur: ${response.status}`);
             
