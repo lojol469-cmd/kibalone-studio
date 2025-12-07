@@ -172,6 +172,69 @@ Réponds UNIQUEMENT en JSON valide et détaillé."""
                 'lighting_requirements': 'standard'
             }
     
+    def _get_example_for_type(self, object_type, scene_context=None):
+        """Retourne un exemple de code selon le type d'objet"""
+        
+        # Position adaptative selon contexte
+        position_y = 0
+        if scene_context and scene_context.get('has_vehicle'):
+            position_y = -1  # Sous le véhicule pour eau/sol
+        
+        examples = {
+            'water': f"""
+const waterGroup = new THREE.Group();
+const waterGeo = new THREE.PlaneGeometry(50, 50, 32, 32);
+const waterMat = new THREE.MeshStandardMaterial({{
+    color: 0x1e90ff,
+    metalness: 0.8,
+    roughness: 0.2,
+    transparent: true,
+    opacity: 0.7
+}});
+const waterMesh = new THREE.Mesh(waterGeo, waterMat);
+waterMesh.rotation.x = -Math.PI / 2;
+waterMesh.position.y = {position_y};
+waterGroup.add(waterMesh);
+studio.scene.add(waterGroup);
+""",
+            'vehicle': """
+const boatGroup = new THREE.Group();
+const hullGeo = new THREE.BoxGeometry(4, 1, 2);
+const hullMat = new THREE.MeshStandardMaterial({{ color: 0x8b4513, roughness: 0.7 }});
+const hull = new THREE.Mesh(hullGeo, hullMat);
+boatGroup.add(hull);
+const deckGeo = new THREE.BoxGeometry(3.5, 0.2, 1.8);
+const deck = new THREE.Mesh(deckGeo, hullMat);
+deck.position.y = 0.6;
+boatGroup.add(deck);
+studio.scene.add(boatGroup);
+""",
+            'character': """
+const characterGroup = new THREE.Group();
+const bodyGeo = new THREE.CylinderGeometry(0.3, 0.3, 1.2, 16);
+const bodyMat = new THREE.MeshStandardMaterial({{ color: 0xffdbac }});
+const body = new THREE.Mesh(bodyGeo, bodyMat);
+characterGroup.add(body);
+const headGeo = new THREE.SphereGeometry(0.25, 16, 16);
+const head = new THREE.Mesh(headGeo, bodyMat);
+head.position.y = 0.85;
+characterGroup.add(head);
+studio.scene.add(characterGroup);
+""",
+            'environment': f"""
+const groundGroup = new THREE.Group();
+const groundGeo = new THREE.PlaneGeometry(100, 100);
+const groundMat = new THREE.MeshStandardMaterial({{ color: 0x228b22, roughness: 0.9 }});
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = {position_y};
+groundGroup.add(ground);
+studio.scene.add(groundGroup);
+"""
+        }
+        
+        return examples.get(object_type, examples['vehicle'])
+    
     def generate_code_with_codellama(self, prompt, analysis, scene_context=None):
         """PHASE 2: Génère le code Three.js avec Mistral API ou CodeLlama local + contexte scène"""
         
@@ -201,62 +264,36 @@ Adaptation contextuelle: {analysis.get('contextual_adaptation', 'intégration in
         # PRIORITÉ: Utilise Mistral API pour générer du vrai code créatif
         print(f"   💻 Génération code contextuel avec Mistral API...")
         
-        code_prompt = f"""Tu es un expert 3D professionnel. Génère du code Three.js de haute qualité pour créer des modèles 3D complexes et réalistes.
+        # 🔥 EXEMPLE CONCRET selon le type d'objet
+        example_code = self._get_example_for_type(analysis.get('object_type', 'object'), scene_context)
+        
+        # Position adaptée au contexte
+        position_hint = "0"
+        if scene_context and scene_context.get('total_objects', 0) > 0:
+            if 'water' in prompt.lower() or 'sea' in prompt.lower() or 'mer' in prompt.lower():
+                position_hint = "-1"  # Sous les objets existants
+            elif 'ground' in prompt.lower() or 'sol' in prompt.lower() or 'floor' in prompt.lower():
+                position_hint = "-0.5"  # Sous les objets
+        
+        code_prompt = f"""Create Three.js code for: {prompt}
 
-⚠️ RÈGLES CRITIQUES - CODE NAVIGATEUR UNIQUEMENT:
-- ❌ INTERDICTION ABSOLUE: import, require, export, module.exports
-- ❌ PAS de Node.js modules (fs, path, etc.)
-- ✅ UNIQUEMENT: Code Three.js pur compatible navigateur
-- ✅ THREE est déjà disponible globalement (window.THREE)
-- ✅ studio.scene est déjà disponible (pas besoin de créer une scène)
+Type: {analysis.get('object_type')}
+Colors: {', '.join(analysis.get('color_palette', ['0x888888'])[:2])}
+Scale: {analysis.get('scale_reference', 1.0)}m
+Position Y: {position_hint}
 
-TECHNIQUES PROFESSIONNELLES À UTILISER:
-1. **Hiérarchie d'objets**: Utilise THREE.Group() pour organiser les parties
-2. **Géométries avancées**: Combine BoxGeometry, CylinderGeometry, SphereGeometry, ConeGeometry, PlaneGeometry
-3. **Matériaux PBR**: MeshStandardMaterial avec metalness, roughness, transparent si nécessaire
-4. **Textures procédurales**: Crée des matériaux avec des couleurs et propriétés réalistes
-5. **Éclairage intégré**: Les objets doivent s'intégrer avec l'éclairage existant
-6. **Optimisation**: Utilise BufferGeometry et instancing si nécessaire
-7. **Animation-ready**: Structure pour permettre les animations futures
-8. **Positionnement intelligent**: Analyse le contexte pour positionner correctement{context_instructions}
+RULES:
+- NO import/require/export
+- Use THREE (global)
+- Use studio.scene.add()
+- ASCII characters only
 
-STANDARDS PROFESSIONNELS:
-- Noms de variables descriptifs (torsoGroup, headMesh, leftArm, waterPlane, etc.)
-- Commentaires courts et clairs
-- Positionnement relatif intelligent basé sur le contexte
-- Échelle réaliste (unités mètres)
-- Matériaux avec propriétés physiques réalistes
+EXAMPLE CODE:
+{example_code}
 
-REQUÊTE: "{prompt}"
+NOW CREATE CODE FOR: {prompt}
 
-ANALYSE TECHNIQUE:
-- Type: {analysis.get('object_type', 'object')}
-- Style: {analysis.get('style', 'realistic')}
-- Complexité: {analysis.get('complexity', 'medium')}
-- Caractéristiques: {', '.join(analysis.get('key_features', []))}
-- Géométries: {', '.join(analysis.get('geometry_hints', ['BoxGeometry', 'CylinderGeometry']))}
-- Palette: {', '.join(analysis.get('color_palette', ['0x888888']))}
-- Matériaux: {analysis.get('material_properties', {'metalness': 0.3, 'roughness': 0.7})}
-- Échelle: {analysis.get('scale_reference', 1.0)}m
-- Animation: {', '.join(analysis.get('animation_potential', []))}
-- Éclairage: {analysis.get('lighting_requirements', 'standard')}
-
-GÉNÈRE DU CODE THREE.JS PROFESSIONNEL, DÉTAILLÉ ET FONCTIONNEL. MINIMUM 50 LIGNES.
-
-Structure attendue:
-```javascript
-// Création du groupe principal
-const mainGroup = new THREE.Group();
-mainGroup.name = 'generated_object';
-
-// Parties constitutives avec hiérarchie
-// ... code détaillé ...
-
-// Ajout à la scène (utilise studio.scene au lieu de scene)
-studio.scene.add(mainGroup);
-```
-
-CODE UNIQUEMENT, PAS DE MARKDOWN."""
+CODE:"""
 
         try:
             # Utilise chat_completion au lieu de text_generation pour Mistral
@@ -292,7 +329,16 @@ CODE UNIQUEMENT, PAS DE MARKDOWN."""
                             code = part
                         break
             
-            # 2. 🔥 NOUVEAU: Retire TOUTES les lignes avec import/require/export
+            # 2. 🔥 Nettoie caractères non-ASCII
+            cleaned_chars = []
+            for char in code:
+                if ord(char) < 128 or char in ['\n', '\r', '\t']:  # ASCII seulement
+                    cleaned_chars.append(char)
+                else:
+                    print(f"   🚫 Caractère non-ASCII supprimé: {repr(char)}")
+            code = ''.join(cleaned_chars)
+            
+            # 3. 🔥 Retire TOUTES les lignes avec import/require/export
             import re
             lines = []
             for line in code.split('\n'):
@@ -304,10 +350,10 @@ CODE UNIQUEMENT, PAS DE MARKDOWN."""
                 lines.append(line)
             code = '\n'.join(lines)
             
-            # 3. Retire les commentaires multi-lignes qui peuvent casser
+            # 4. Retire les commentaires multi-lignes qui peuvent casser
             code = re.sub(r'/\*.*?\*/', '', code, flags=re.DOTALL)
             
-            # 4. Retire les lignes de commentaires simples (sauf URLs)
+            # 5. Retire les lignes de commentaires simples (sauf URLs)
             lines = []
             for line in code.split('\n'):
                 stripped = line.strip()
@@ -316,7 +362,7 @@ CODE UNIQUEMENT, PAS DE MARKDOWN."""
                     lines.append(line)
             code = '\n'.join(lines)
             
-            # 5. Fixe les parenthèses/accolades mal fermées (basique)
+            # 6. Fixe les parenthèses/accolades mal fermées (basique)
             open_parens = code.count('(')
             close_parens = code.count(')')
             if open_parens > close_parens:
