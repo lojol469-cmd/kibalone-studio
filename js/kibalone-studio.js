@@ -213,24 +213,123 @@ class KibaloneStudio {
         document.getElementById('timeline-progress').style.width = progress + '%';
     }
 
-    // AI Functions - Génération 3D par prompt IA uniquement
+    // 🔍 ANALYSE CONTEXTUELLE DE LA SCÈNE
+    getSceneContext() {
+        const context = {
+            objects: [],
+            total_objects: 0,
+            has_character: false,
+            has_environment: false,
+            has_water: false,
+            has_vehicle: false,
+            has_building: false,
+            lighting: {
+                ambient: false,
+                directional: false,
+                point: false
+            },
+            camera_position: {
+                x: this.camera.position.x,
+                y: this.camera.position.y,
+                z: this.camera.position.z
+            },
+            bounds: {
+                min: { x: Infinity, y: Infinity, z: Infinity },
+                max: { x: -Infinity, y: -Infinity, z: -Infinity }
+            }
+        };
+
+        // Analyse tous les objets de la scène
+        this.scene.traverse((obj) => {
+            if (obj.isMesh || obj.isGroup) {
+                const name = (obj.name || obj.userData.type || 'unknown').toLowerCase();
+                
+                // Détermine le type d'objet
+                const objInfo = {
+                    name: obj.name || 'objet_' + context.objects.length,
+                    type: obj.userData.type || 'unknown',
+                    position: { x: obj.position.x, y: obj.position.y, z: obj.position.z },
+                    scale: { x: obj.scale.x, y: obj.scale.y, z: obj.scale.z }
+                };
+
+                // Détection intelligente des types
+                if (name.includes('character') || name.includes('person') || name.includes('human') || name.includes('robot')) {
+                    context.has_character = true;
+                    objInfo.type = 'character';
+                }
+                if (name.includes('water') || name.includes('ocean') || name.includes('sea') || name.includes('lake')) {
+                    context.has_water = true;
+                    objInfo.type = 'water';
+                }
+                if (name.includes('boat') || name.includes('ship') || name.includes('vehicle') || name.includes('car')) {
+                    context.has_vehicle = true;
+                    objInfo.type = 'vehicle';
+                }
+                if (name.includes('building') || name.includes('house') || name.includes('city')) {
+                    context.has_building = true;
+                    objInfo.type = 'building';
+                }
+                if (name.includes('ground') || name.includes('floor') || name.includes('terrain') || name.includes('environment')) {
+                    context.has_environment = true;
+                    objInfo.type = 'environment';
+                }
+
+                context.objects.push(objInfo);
+                context.total_objects++;
+
+                // Calcule les bounds
+                if (obj.geometry) {
+                    const box = new THREE.Box3().setFromObject(obj);
+                    context.bounds.min.x = Math.min(context.bounds.min.x, box.min.x);
+                    context.bounds.min.y = Math.min(context.bounds.min.y, box.min.y);
+                    context.bounds.min.z = Math.min(context.bounds.min.z, box.min.z);
+                    context.bounds.max.x = Math.max(context.bounds.max.x, box.max.x);
+                    context.bounds.max.y = Math.max(context.bounds.max.y, box.max.y);
+                    context.bounds.max.z = Math.max(context.bounds.max.z, box.max.z);
+                }
+            }
+
+            // Analyse les lumières
+            if (obj.isAmbientLight) context.lighting.ambient = true;
+            if (obj.isDirectionalLight) context.lighting.directional = true;
+            if (obj.isPointLight) context.lighting.point = true;
+        });
+
+        return context;
+    }
+
+    // AI Functions - Génération 3D par prompt IA avec compréhension contextuelle
     async processAICommand(prompt) {
         addChatMessage('user', prompt);
-        addChatMessage('ai', '🧠 Génération 3D par IA...');
+        addChatMessage('ai', '🧠 Analyse contextuelle et génération 3D...');
         addLog(`📨 Requête utilisateur: "${prompt}"`);
         
         try {
-            // 🚀 NOUVEAU: Utilise uniquement le générateur HYBRIDE de code
-            addLog('🧠 [Mistral] Analyse de la requête...');
-            addLog('💻 [CodeLlama] Génération du code Three.js...');
-            addChatMessage('ai', '⚡ Génération du code 3D intelligent...');
+            // 🔍 ANALYSE DU CONTEXTE DE LA SCÈNE
+            const sceneContext = this.getSceneContext();
+            addLog(`📊 Analyse scène: ${sceneContext.total_objects} objet(s) détecté(s)`);
             
-            const response = await fetch('http://localhost:11000/api/generate-model', {
+            if (sceneContext.total_objects > 0) {
+                addLog(`🎯 Contexte:`);
+                if (sceneContext.has_character) addLog(`   • Personnage présent`);
+                if (sceneContext.has_vehicle) addLog(`   • Véhicule présent (${sceneContext.objects.find(o => o.type === 'vehicle')?.name})`);
+                if (sceneContext.has_water) addLog(`   • Eau présente`);
+                if (sceneContext.has_building) addLog(`   • Bâtiment présent`);
+                if (sceneContext.has_environment) addLog(`   • Environnement présent`);
+            }
+            
+            // 🚀 GÉNÉRATION CONTEXTUELLE avec Mistral + CodeLlama
+            addLog('🧠 [Mistral] Analyse contextuelle de la requête...');
+            addLog('💻 [CodeLlama] Génération du code Three.js adapté...');
+            addChatMessage('ai', '⚡ Génération du code 3D intelligent avec contexte...');
+            
+            const response = await fetch('http://localhost:11000/api/chat/generate-model', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ 
                     prompt: prompt,
-                    type: 'object'
+                    type: 'object',
+                    scene_context: sceneContext  // 🔥 NOUVEAU: Envoie le contexte
                 })
             });
             
@@ -291,7 +390,7 @@ class KibaloneStudio {
                     
                     // AUTO-CORRECTION: Demande à Mistral de corriger
                     try {
-                        const fixResponse = await fetch('http://localhost:11000/api/fix-code', {
+                        const fixResponse = await fetch('http://localhost:11000/api/chat/fix-code', {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json'},
                             body: JSON.stringify({

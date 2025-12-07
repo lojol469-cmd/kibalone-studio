@@ -70,23 +70,45 @@ class HybridAIGenerator:
             print(f"⚠️  CodeLlama fallback API: {e}")
             self.codellama = None
     
-    def analyze_with_mistral(self, prompt):
-        """PHASE 1: Mistral analyse et décompose la requête"""
-        analysis_prompt = f"""Analyse cette requête 3D et fournis une analyse technique détaillée en JSON:
+    def analyze_with_mistral(self, prompt, scene_context=None):
+        """PHASE 1: Mistral analyse et décompose la requête avec contexte scène"""
+        
+        # 🔥 NOUVEAU: Construit un prompt enrichi avec le contexte
+        context_info = ""
+        if scene_context and scene_context.get('total_objects', 0) > 0:
+            context_info = f"""
+
+CONTEXTE DE LA SCÈNE ACTUELLE:
+- Nombre d'objets existants: {scene_context['total_objects']}
+- Objets présents: {', '.join([obj['name'] for obj in scene_context.get('objects', [])[:5]])}
+- Personnage présent: {'OUI' if scene_context.get('has_character') else 'NON'}
+- Véhicule présent: {'OUI' if scene_context.get('has_vehicle') else 'NON'}
+- Eau présente: {'OUI' if scene_context.get('has_water') else 'NON'}
+- Environnement présent: {'OUI' if scene_context.get('has_environment') else 'NON'}
+
+IMPORTANT: Tiens compte du contexte pour adapter ta génération!
+- Si un bateau existe et l'utilisateur demande "ajoute de l'eau", positionne l'eau SOUS le bateau
+- Si un personnage existe et l'utilisateur demande "ajoute un sol", crée le sol SOUS le personnage
+- Adapte la position, l'échelle et l'orientation selon les objets existants
+- Si demande de "mettre X sur Y", utilise les positions des objets existants pour calculer la nouvelle position"""
+        
+        analysis_prompt = f"""Analyse cette requête 3D et fournis une analyse technique détaillée en JSON:{context_info}
 
 REQUÊTE: "{prompt}"
 
 Analyse technique professionnelle:
-- object_type: character/vehicle/building/furniture/animal/plant/environment/props/mechanical
+- object_type: character/vehicle/building/furniture/animal/plant/environment/props/mechanical/water/terrain
 - style: realistic/stylized/cartoon/anime/cyberpunk/fantasy/medieval/modern/abstract/minimalist
 - complexity: simple/medium/complex/very_complex (basé sur nombre de parties et détails)
 - key_features: liste détaillée des caractéristiques techniques (dimensions, matériaux, fonctionnalités)
-- geometry_hints: géométries Three.js optimales (BoxGeometry, CylinderGeometry, SphereGeometry, ConeGeometry, TorusGeometry, etc.)
+- geometry_hints: géométries Three.js optimales (BoxGeometry, CylinderGeometry, SphereGeometry, ConeGeometry, TorusGeometry, PlaneGeometry, etc.)
 - color_palette: couleurs hexadécimales réalistes pour matériaux PBR
-- material_properties: {{"metalness": float, "roughness": float, "transmission": float}} par partie
-- scale_reference: échelle réaliste en mètres (ex: character=1.8, vehicle=4.5)
-- animation_potential: parties animables (joints, portes, roues, etc.)
+- material_properties: {{"metalness": float, "roughness": float, "transmission": float, "transparent": bool}} par partie
+- scale_reference: échelle réaliste en mètres (ex: character=1.8, vehicle=4.5, water_plane=100)
+- position_hint: position suggérée basée sur le contexte (ex: {{"y": -0.5}} pour eau sous bateau)
+- animation_potential: parties animables (joints, portes, roues, vagues, etc.)
 - lighting_requirements: besoins en éclairage spécifiques
+- contextual_adaptation: comment s'intégrer dans la scène existante
 
 Réponds UNIQUEMENT en JSON valide et détaillé."""
 
@@ -150,27 +172,51 @@ Réponds UNIQUEMENT en JSON valide et détaillé."""
                 'lighting_requirements': 'standard'
             }
     
-    def generate_code_with_codellama(self, prompt, analysis):
-        """PHASE 2: Génère le code Three.js avec Mistral API ou CodeLlama local"""
+    def generate_code_with_codellama(self, prompt, analysis, scene_context=None):
+        """PHASE 2: Génère le code Three.js avec Mistral API ou CodeLlama local + contexte scène"""
+        
+        # 🔥 NOUVEAU: Construit les instructions contextuelles
+        context_instructions = ""
+        if scene_context and scene_context.get('total_objects', 0) > 0:
+            existing_objects = ', '.join([f"{obj['name']} (type: {obj['type']}, pos: {obj['position']})" 
+                                         for obj in scene_context.get('objects', [])[:3]])
+            
+            context_instructions = f"""
+
+CONTEXTE DE LA SCÈNE EXISTANTE - TRÈS IMPORTANT:
+- {scene_context['total_objects']} objet(s) déjà dans la scène
+- Objets existants: {existing_objects}
+- Bounds scène: min({scene_context['bounds']['min']['x']:.1f}, {scene_context['bounds']['min']['y']:.1f}, {scene_context['bounds']['min']['z']:.1f}), max({scene_context['bounds']['max']['x']:.1f}, {scene_context['bounds']['max']['y']:.1f}, {scene_context['bounds']['max']['z']:.1f})
+
+RÈGLES DE POSITIONNEMENT CONTEXTUEL:
+1. Si demande "ajouter eau" et véhicule existe → positionne eau SOUS le véhicule (y négatif)
+2. Si demande "ajouter sol/terrain" → positionne sous tous les objets existants
+3. Si demande "mettre X sur Y" → calcule position relative basée sur les objets existants
+4. Utilise les bounds pour ne pas créer d'objets en collision
+5. Adapte l'échelle en fonction des objets existants
+
+Position hint: {analysis.get('position_hint', 'auto')}
+Adaptation contextuelle: {analysis.get('contextual_adaptation', 'intégration intelligente')}"""
         
         # PRIORITÉ: Utilise Mistral API pour générer du vrai code créatif
-        print(f"   💻 Génération code avec Mistral API...")
+        print(f"   💻 Génération code contextuel avec Mistral API...")
         
         code_prompt = f"""Tu es un expert 3D professionnel. Génère du code Three.js de haute qualité pour créer des modèles 3D complexes et réalistes.
 
 TECHNIQUES PROFESSIONNELLES À UTILISER:
 1. **Hiérarchie d'objets**: Utilise THREE.Group() pour organiser les parties
-2. **Géométries avancées**: Combine BoxGeometry, CylinderGeometry, SphereGeometry, ConeGeometry
-3. **Matériaux PBR**: MeshStandardMaterial avec metalness, roughness, normalMap
+2. **Géométries avancées**: Combine BoxGeometry, CylinderGeometry, SphereGeometry, ConeGeometry, PlaneGeometry
+3. **Matériaux PBR**: MeshStandardMaterial avec metalness, roughness, transparent si nécessaire
 4. **Textures procédurales**: Crée des matériaux avec des couleurs et propriétés réalistes
 5. **Éclairage intégré**: Les objets doivent s'intégrer avec l'éclairage existant
 6. **Optimisation**: Utilise BufferGeometry et instancing si nécessaire
 7. **Animation-ready**: Structure pour permettre les animations futures
+8. **Positionnement intelligent**: Analyse le contexte pour positionner correctement{context_instructions}
 
 STANDARDS PROFESSIONNELS:
-- Noms de variables descriptifs (torsoGroup, headMesh, leftArm, etc.)
+- Noms de variables descriptifs (torsoGroup, headMesh, leftArm, waterPlane, etc.)
 - Commentaires explicatifs
-- Positionnement relatif intelligent
+- Positionnement relatif intelligent basé sur le contexte
 - Échelle réaliste (unités mètres)
 - Matériaux avec propriétés physiques réalistes
 
@@ -199,8 +245,8 @@ mainGroup.name = 'generated_object';
 // Parties constitutives avec hiérarchie
 // ... code détaillé ...
 
-// Ajout à la scène
-scene.add(mainGroup);
+// Ajout à la scène (utilise studio.scene au lieu de scene)
+studio.scene.add(mainGroup);
 ```
 
 CODE UNIQUEMENT, PAS DE MARKDOWN."""
@@ -363,14 +409,23 @@ studio.scene.add(group);
 addLog('✅ {prompt} créé');
 """
     
-    def generate(self, prompt, object_type='object'):
-        """Pipeline complet: Mistral analyse → CodeLlama génère"""
+    def generate(self, prompt, object_type='object', scene_context=None):
+        """Pipeline complet: Mistral analyse → CodeLlama génère avec contexte"""
         print(f"🧠 [Mistral] Analyse de: {prompt}")
-        analysis = self.analyze_with_mistral(prompt)
+        
+        # 🔥 NOUVEAU: Enrichit l'analyse avec le contexte de la scène
+        if scene_context and scene_context.get('total_objects', 0) > 0:
+            print(f"📊 Contexte scène: {scene_context['total_objects']} objet(s)")
+            print(f"   • Personnage: {scene_context.get('has_character', False)}")
+            print(f"   • Véhicule: {scene_context.get('has_vehicle', False)}")
+            print(f"   • Eau: {scene_context.get('has_water', False)}")
+            print(f"   • Environnement: {scene_context.get('has_environment', False)}")
+        
+        analysis = self.analyze_with_mistral(prompt, scene_context)
         print(f"   → Type: {analysis.get('object_type')}, Style: {analysis.get('style')}")
         
-        print(f"💻 [CodeLlama] Génération du code...")
-        code = self.generate_code_with_codellama(prompt, analysis)
+        print(f"💻 [CodeLlama] Génération du code contextuel...")
+        code = self.generate_code_with_codellama(prompt, analysis, scene_context)
         print(f"   → {len(code)} caractères générés")
         
         return {
