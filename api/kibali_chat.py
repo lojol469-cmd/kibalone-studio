@@ -17,6 +17,14 @@ except Exception as e:
     hybrid_generator = None
     HYBRID_AVAILABLE = False
 
+# Import du générateur procédural simple (fallback fiable)
+try:
+    from simple_procedural_generator import generate_simple_code
+    SIMPLE_GENERATOR_AVAILABLE = True
+except Exception as e:
+    logging.warning(f"⚠️ Générateur simple non disponible: {e}")
+    SIMPLE_GENERATOR_AVAILABLE = False
+
 chat_routes = Blueprint('chat', __name__)
 logger = logging.getLogger(__name__)
 
@@ -24,16 +32,10 @@ logger = logging.getLogger(__name__)
 def generate_model():
     """Génère un modèle 3D avec le générateur hybride IA (Mistral + CodeLlama)"""
     try:
-        if not HYBRID_AVAILABLE:
-            return jsonify({
-                'success': False,
-                'error': 'Générateur hybride non disponible'
-            }), 503
-        
         data = request.get_json()
         prompt = data.get('prompt', '')
         object_type = data.get('type', 'object')
-        scene_context = data.get('scene_context', None)  # 🔥 NOUVEAU: Contexte de la scène
+        scene_context = data.get('scene_context', None)
         
         if not prompt:
             return jsonify({'error': 'Prompt required'}), 400
@@ -42,24 +44,43 @@ def generate_model():
         if scene_context:
             logger.info(f"📊 Contexte: {scene_context.get('total_objects', 0)} objet(s)")
         
-        # Génération avec contexte
-        result = hybrid_generator.generate(prompt, object_type, scene_context)
+        # 🔥 STRATÉGIE: Essaie Mistral, sinon fallback sur générateur simple
+        if HYBRID_AVAILABLE:
+            try:
+                result = hybrid_generator.generate(prompt, object_type, scene_context)
+                
+                if result.get('success'):
+                    return jsonify({
+                        'success': True,
+                        'model_data': {
+                            'code': result.get('code'),
+                            'type': result.get('type', 'javascript')
+                        },
+                        'analysis': result.get('analysis', {}),
+                        'method': 'hybrid-ai'
+                    })
+            except Exception as e:
+                logger.warning(f"⚠️ Mistral failed, using simple generator: {e}")
         
-        if result.get('success'):
+        # FALLBACK: Générateur procédural simple (toujours fonctionne)
+        if SIMPLE_GENERATOR_AVAILABLE:
+            logger.info("🔧 Utilisation du générateur procédural simple")
+            code = generate_simple_code(prompt, scene_context)
+            
             return jsonify({
                 'success': True,
                 'model_data': {
-                    'code': result.get('code'),
-                    'type': result.get('type', 'javascript')
+                    'code': code,
+                    'type': 'javascript'
                 },
-                'analysis': result.get('analysis', {}),
-                'method': 'hybrid-ai'
+                'analysis': {'object_type': 'procedural', 'style': 'simple'},
+                'method': 'simple-procedural'
             })
-        else:
-            return jsonify({
-                'success': False,
-                'error': result.get('error', 'Génération échouée')
-            }), 500
+        
+        return jsonify({
+            'success': False,
+            'error': 'Aucun générateur disponible'
+        }), 503
             
     except Exception as e:
         logger.error(f'❌ Erreur génération: {e}')
