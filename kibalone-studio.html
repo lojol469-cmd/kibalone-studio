@@ -579,14 +579,15 @@
             </div>
             <div class="chat-messages" id="chat-messages">
                 <div class="message ai">
-                    <div>🎭 Bonjour ! Je suis Kibali, votre orchestrateur IA 3D.</div>
-                    <div>💡 Je comprends les demandes complexes et j'utilise 48 outils automatiquement!</div>
+                    <div>🎭 Bonjour ! Je suis Kibali, votre générateur 3D par IA.</div>
+                    <div>💡 Je transforme vos prompts textuels en modèles 3D complexes !</div>
                     <div>📋 Exemple: "crée un personnage qui court et saute"</div>
                     <div class="message-time">Maintenant</div>
                 </div>
             </div>
             <div class="chat-input-container">
-                <!-- Upload d'image de référence -->
+                <!-- Upload d'image de référence - DÉSACTIVÉ pour focus sur génération par prompt -->
+                <!--
                 <div class="reference-image-section" id="reference-section" style="display: none; margin-bottom: 10px;">
                     <div class="reference-preview" id="reference-preview">
                         <img id="reference-img" style="max-width: 100%; max-height: 150px; border-radius: 8px;">
@@ -602,19 +603,20 @@
                     </button>
                     <span id="upload-hint" style="font-size: 10px; color: #888; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Ref. image pour génération</span>
                 </div>
+                -->
                 
                 <textarea 
                     class="chat-input" 
                     id="chat-input" 
-                    placeholder="Ex: crée un personnage qui court et saute..." 
+                    placeholder="Ex: crée un robot industriel avec bras articulés..." 
                     rows="3"
                     onkeydown="handleChatInput(event)"></textarea>
                 <div class="quick-prompts">
-                    <div class="quick-prompt" onclick="quickPrompt('crée un personnage qui court')">🏃 Personnage qui court</div>
-                    <div class="quick-prompt" onclick="quickPrompt('terrain de foot avec caméra 360')">⚽ Terrain + Caméra</div>
-                    <div class="quick-prompt" onclick="quickPrompt('personnage héroïque vue isométrique')">🦸 Héros ISO</div>
-                    <div class="quick-prompt" onclick="quickPrompt('environnement forêt avec animation')">🌲 Forêt animée</div>
-                    <div class="quick-prompt" onclick="quickPrompt('orbite 360')">📹 Orbite 360</div>
+                    <div class="quick-prompt" onclick="quickPrompt('crée un personnage humain réaliste')">👤 Personnage réaliste</div>
+                    <div class="quick-prompt" onclick="quickPrompt('véhicule de course futuriste')">🏎️ Voiture de course</div>
+                    <div class="quick-prompt" onclick="quickPrompt('bâtiment moderne avec détails')">🏢 Bâtiment moderne</div>
+                    <div class="quick-prompt" onclick="quickPrompt('robot industriel complexe')">🤖 Robot industriel</div>
+                    <div class="quick-prompt" onclick="quickPrompt('environnement urbain nocturne')">🌃 Ville nocturne</div>
                 </div>
             </div>
         </aside>

@@ -213,20 +213,13 @@ class KibaloneStudio {
         document.getElementById('timeline-progress').style.width = progress + '%';
     }
 
-    // AI Functions - Workflows de reconstruction 3D
+    // AI Functions - Génération 3D par prompt IA uniquement
     async processAICommand(prompt) {
         addChatMessage('user', prompt);
-        addChatMessage('ai', '🧠 Kibali analyse avec Mistral + CodeLlama...');
+        addChatMessage('ai', '🧠 Génération 3D par IA...');
         addLog(`📨 Requête utilisateur: "${prompt}"`);
-
+        
         try {
-            // 🖼️ Enrichit le prompt avec l'analyse d'image si disponible
-            let enrichedPrompt = prompt;
-            if (referenceAnalysis) {
-                enrichedPrompt = `[IMAGE DE RÉFÉRENCE: ${referenceAnalysis.description}, Style: ${referenceAnalysis.style}, Couleurs: ${referenceAnalysis.colors.join(', ')}] ${prompt}`;
-                addLog(`🖼️ Utilisation de l'image de référence pour guider la génération`);
-            }
-            
             // 🚀 NOUVEAU: Utilise uniquement le générateur HYBRIDE de code
             addLog('🧠 [Mistral] Analyse de la requête...');
             addLog('💻 [CodeLlama] Génération du code Three.js...');
@@ -236,9 +229,8 @@ class KibaloneStudio {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ 
-                    prompt: enrichedPrompt,
-                    type: 'object',
-                    reference_image: referenceAnalysis || null
+                    prompt: prompt,
+                    type: 'object'
                 })
             });
             
@@ -333,7 +325,6 @@ class KibaloneStudio {
                 addLog(`❌ ${errorMsg}`);
                 addChatMessage('ai', `⚠️ ${errorMsg}`);
             }
-
         } catch (error) {
             console.error('Erreur génération 3D:', error);
             addLog(`❌ Erreur: ${error.message}`);

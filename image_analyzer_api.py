@@ -11,7 +11,7 @@ import base64
 import io
 from PIL import Image
 import torch
-from transformers import CLIPProcessor, CLIPModel
+from transformers import CLIPProcessor, CLIPModel, BlipProcessor, BlipForConditionalGeneration
 import easyocr
 from ultralytics import YOLO
 import numpy as np
@@ -19,6 +19,7 @@ import numpy as np
 # Chemins des modèles
 ISOL_PATH = Path("/home/belikan/Isol")
 CLIP_PATH = ISOL_PATH / "kibali-IA/kibali_data/models/clip/models--openai--clip-vit-base-patch32/snapshots"
+BLIP_PATH = ISOL_PATH / "kibali-IA/kibali_data/models/huggingface_cache/models--Salesforce--blip-image-captioning-base"
 YOLO_PATH = Path("/home/belikan/yolo11n.pt")
 
 class ImageAnalyzer:
@@ -31,6 +32,9 @@ class ImageAnalyzer:
         
         # 1️⃣ CLIP - Compréhension visuelle
         self._load_clip()
+        
+        # 1.5️⃣ BLIP - Description détaillée
+        self._load_blip()
         
         # 2️⃣ EasyOCR - Lecture de texte
         self._load_ocr()
@@ -59,6 +63,26 @@ class ImageAnalyzer:
             print(f"⚠️  CLIP non disponible: {e}")
             self.clip_model = None
             self.clip_processor = None
+    
+    def _load_blip(self):
+        """Charge BLIP pour la description détaillée"""
+        try:
+            blip_snapshot = list(BLIP_PATH.glob("*"))[0] if BLIP_PATH.exists() else None
+            
+            if blip_snapshot:
+                print(f"📦 Chargement BLIP local...")
+                self.blip_model = BlipForConditionalGeneration.from_pretrained(str(blip_snapshot)).to(self.device)
+                self.blip_processor = BlipProcessor.from_pretrained(str(blip_snapshot))
+            else:
+                print(f"📦 Chargement BLIP depuis HuggingFace...")
+                self.blip_model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base").to(self.device)
+                self.blip_processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
+            
+            print("✅ BLIP chargé")
+        except Exception as e:
+            print(f"⚠️  BLIP non disponible: {e}")
+            self.blip_model = None
+            self.blip_processor = None
     
     def _load_ocr(self):
         """Charge EasyOCR pour la lecture de texte"""
@@ -93,11 +117,13 @@ class ImageAnalyzer:
         
         Returns:
             dict avec:
-            - description: Description textuelle globale
+            - description: Description textuelle globale (CLIP)
+            - detailed_description: Description détaillée (BLIP)
             - objects: Liste d'objets détectés par YOLO
             - text: Texte détecté par OCR
             - colors: Palette de couleurs dominantes
             - style: Style artistique détecté
+            - dimensions: Dimensions de l'image
         """
         # Décode l'image
         if isinstance(image_data, str):
@@ -122,6 +148,10 @@ class ImageAnalyzer:
             result['description'] = self._analyze_with_clip(image)
             result['style'] = self._detect_style_with_clip(image)
         
+        # 1.5️⃣ BLIP - Description détaillée
+        if self.blip_model:
+            result['detailed_description'] = self._caption_with_blip(image)
+        
         # 2️⃣ YOLO - Détection d'objets
         if self.yolo_model:
             result['objects'] = self._detect_objects_with_yolo(image)
@@ -133,21 +163,41 @@ class ImageAnalyzer:
         # 4️⃣ Extraction de couleurs
         result['colors'] = self._extract_colors(image)
         
+        # 5️⃣ Si aucun objet détecté par YOLO, utiliser le texte OCR comme objets
+        if not result['objects'] and result['text']:
+            for text_item in result['text']:
+                if text_item['confidence'] > 0.5:  # Seuil de confiance
+                    result['objects'].append({
+                        'class': f"text_{text_item['text']}",
+                        'confidence': text_item['confidence'],
+                        'bbox': text_item['bbox']
+                    })
+        
         return result
     
     def _analyze_with_clip(self, image):
         """Analyse l'image avec CLIP pour obtenir une description"""
         try:
-            # Questions contextuelles pour CLIP
+            # Questions contextuelles pour CLIP - étendues pour logos et texte
             prompts = [
                 "a photo of a vehicle",
-                "a photo of a building",
+                "a photo of a building", 
                 "a photo of a person",
                 "a photo of an animal",
                 "a photo of furniture",
                 "a photo of nature",
                 "a photo of food",
-                "a photo of an object"
+                "a photo of an object",
+                "a logo with letters",
+                "a text logo",
+                "a letter T",
+                "an initial letter",
+                "a minimalist logo",
+                "a modern logo",
+                "text and typography",
+                "a graphic design",
+                "a brand logo",
+                "a letter in a logo"
             ]
             
             inputs = self.clip_processor(
@@ -203,6 +253,21 @@ class ImageAnalyzer:
         except Exception as e:
             print(f"Erreur style detection: {e}")
             return "realistic"
+    
+    def _caption_with_blip(self, image):
+        """Génère une description détaillée avec BLIP"""
+        try:
+            inputs = self.blip_processor(images=image, return_tensors="pt").to(self.device)
+            
+            with torch.no_grad():
+                outputs = self.blip_model.generate(**inputs, max_length=100, num_beams=4)
+            
+            caption = self.blip_processor.decode(outputs[0], skip_special_tokens=True)
+            return caption
+            
+        except Exception as e:
+            print(f"Erreur BLIP: {e}")
+            return "detailed captioning failed"
     
     def _detect_objects_with_yolo(self, image):
         """Détecte les objets dans l'image avec YOLO"""

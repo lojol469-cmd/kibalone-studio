@@ -72,19 +72,23 @@ class HybridAIGenerator:
     
     def analyze_with_mistral(self, prompt):
         """PHASE 1: Mistral analyse et décompose la requête"""
-        analysis_prompt = f"""Analyse cette requête 3D et fournis une structure JSON:
+        analysis_prompt = f"""Analyse cette requête 3D et fournis une analyse technique détaillée en JSON:
 
 REQUÊTE: "{prompt}"
 
-Détermine:
-- object_type: character/environment/object/effect
-- style: realistic/cartoon/low-poly/cyberpunk/fantasy
-- complexity: simple/medium/complex
-- key_features: liste des caractéristiques principales
-- geometry_hints: formes Three.js à utiliser (BoxGeometry, SphereGeometry, etc.)
-- color_palette: couleurs hexadécimales suggérées
+Analyse technique professionnelle:
+- object_type: character/vehicle/building/furniture/animal/plant/environment/props/mechanical
+- style: realistic/stylized/cartoon/anime/cyberpunk/fantasy/medieval/modern/abstract/minimalist
+- complexity: simple/medium/complex/very_complex (basé sur nombre de parties et détails)
+- key_features: liste détaillée des caractéristiques techniques (dimensions, matériaux, fonctionnalités)
+- geometry_hints: géométries Three.js optimales (BoxGeometry, CylinderGeometry, SphereGeometry, ConeGeometry, TorusGeometry, etc.)
+- color_palette: couleurs hexadécimales réalistes pour matériaux PBR
+- material_properties: {{"metalness": float, "roughness": float, "transmission": float}} par partie
+- scale_reference: échelle réaliste en mètres (ex: character=1.8, vehicle=4.5)
+- animation_potential: parties animables (joints, portes, roues, etc.)
+- lighting_requirements: besoins en éclairage spécifiques
 
-Réponds UNIQUEMENT en JSON valide."""
+Réponds UNIQUEMENT en JSON valide et détaillé."""
 
         try:
             # Utilise chat_completion au lieu de text_generation
@@ -124,8 +128,12 @@ Réponds UNIQUEMENT en JSON valide."""
                     'style': 'realistic',
                     'complexity': 'medium',
                     'key_features': [prompt],
-                    'geometry_hints': ['BoxGeometry', 'SphereGeometry'],
-                    'color_palette': ['0x888888']
+                    'geometry_hints': ['BoxGeometry', 'CylinderGeometry', 'SphereGeometry'],
+                    'color_palette': ['0x888888', '0x444444', '0xcccccc'],
+                    'material_properties': {'metalness': 0.3, 'roughness': 0.7, 'transmission': 0.0},
+                    'scale_reference': 1.0,
+                    'animation_potential': [],
+                    'lighting_requirements': 'standard'
                 }
         except Exception as e:
             print(f"⚠️  Mistral analysis error: {e}")
@@ -134,8 +142,12 @@ Réponds UNIQUEMENT en JSON valide."""
                 'style': 'realistic',
                 'complexity': 'medium',
                 'key_features': [prompt],
-                'geometry_hints': ['BoxGeometry'],
-                'color_palette': ['0x888888']
+                'geometry_hints': ['BoxGeometry', 'CylinderGeometry'],
+                'color_palette': ['0x888888', '0x666666'],
+                'material_properties': {'metalness': 0.2, 'roughness': 0.8, 'transmission': 0.0},
+                'scale_reference': 1.0,
+                'animation_potential': [],
+                'lighting_requirements': 'standard'
             }
     
     def generate_code_with_codellama(self, prompt, analysis):
@@ -144,47 +156,54 @@ Réponds UNIQUEMENT en JSON valide."""
         # PRIORITÉ: Utilise Mistral API pour générer du vrai code créatif
         print(f"   💻 Génération code avec Mistral API...")
         
-        code_prompt = f"""Tu es un expert Three.js. Génère UNIQUEMENT du code pour ajouter des objets 3D à une scène EXISTANTE.
+        code_prompt = f"""Tu es un expert 3D professionnel. Génère du code Three.js de haute qualité pour créer des modèles 3D complexes et réalistes.
 
-CONTEXTE IMPORTANT:
-La scène Three.js existe déjà avec:
-- studio.scene (scène principale)
-- studio.camera (caméra)
-- studio.renderer (rendu)
-- studio.controls (OrbitControls)
+TECHNIQUES PROFESSIONNELLES À UTILISER:
+1. **Hiérarchie d'objets**: Utilise THREE.Group() pour organiser les parties
+2. **Géométries avancées**: Combine BoxGeometry, CylinderGeometry, SphereGeometry, ConeGeometry
+3. **Matériaux PBR**: MeshStandardMaterial avec metalness, roughness, normalMap
+4. **Textures procédurales**: Crée des matériaux avec des couleurs et propriétés réalistes
+5. **Éclairage intégré**: Les objets doivent s'intégrer avec l'éclairage existant
+6. **Optimisation**: Utilise BufferGeometry et instancing si nécessaire
+7. **Animation-ready**: Structure pour permettre les animations futures
 
-NE CRÉE PAS de nouveau Scene, Camera, Renderer, ou OrbitControls!
+STANDARDS PROFESSIONNELS:
+- Noms de variables descriptifs (torsoGroup, headMesh, leftArm, etc.)
+- Commentaires explicatifs
+- Positionnement relatif intelligent
+- Échelle réaliste (unités mètres)
+- Matériaux avec propriétés physiques réalistes
 
 REQUÊTE: "{prompt}"
 
-ANALYSE:
+ANALYSE TECHNIQUE:
 - Type: {analysis.get('object_type', 'object')}
 - Style: {analysis.get('style', 'realistic')}
 - Complexité: {analysis.get('complexity', 'medium')}
-- Features: {', '.join(analysis.get('key_features', []))}
-- Couleurs suggérées: {', '.join(analysis.get('color_palette', ['0x888888']))}
+- Caractéristiques: {', '.join(analysis.get('key_features', []))}
+- Géométries: {', '.join(analysis.get('geometry_hints', ['BoxGeometry', 'CylinderGeometry']))}
+- Palette: {', '.join(analysis.get('color_palette', ['0x888888']))}
+- Matériaux: {analysis.get('material_properties', {'metalness': 0.3, 'roughness': 0.7})}
+- Échelle: {analysis.get('scale_reference', 1.0)}m
+- Animation: {', '.join(analysis.get('animation_potential', []))}
+- Éclairage: {analysis.get('lighting_requirements', 'standard')}
 
-EXIGENCES CRÉATIVES:
-1. Crée un groupe principal: const group = new THREE.Group();
-2. Pour un personnage: ajoute torse, tête, bras, jambes avec formes variées (CylinderGeometry, SphereGeometry, BoxGeometry)
-3. Pour environnement: multiple objets (arbres, rochers, sol) avec positions espacées
-4. Pour objet: détails complexes, plusieurs parties assemblées
-5. Utilise MeshStandardMaterial avec couleurs contextuelles (metalness: 0.3, roughness: 0.7)
-6. Positionne chaque élément avec .position.set(x, y, z) et rotation si nécessaire
-7. Ajoute le groupe: studio.scene.add(group);
-8. Log final: addLog('✅ {prompt} créé avec [nombre] éléments');
+GÉNÈRE DU CODE THREE.JS PROFESSIONNEL, DÉTAILLÉ ET FONCTIONNEL. MINIMUM 50 LIGNES.
 
-⚠️ GÉOMÉTRIES VALIDES UNIQUEMENT:
-- THREE.BoxGeometry(width, height, depth)
-- THREE.SphereGeometry(radius, widthSegments, heightSegments)
-- THREE.CylinderGeometry(radiusTop, radiusBottom, height, radialSegments)
-- THREE.ConeGeometry(radius, height, radialSegments)
-- THREE.TorusGeometry(radius, tube, radialSegments, tubularSegments)
-- THREE.PlaneGeometry(width, height)
+Structure attendue:
+```javascript
+// Création du groupe principal
+const mainGroup = new THREE.Group();
+mainGroup.name = 'generated_object';
 
-❌ N'UTILISE PAS: TriangleFanGeometry, .fromPoints(), BufferGeometry.fromPoints(), Scene(), Camera(), Renderer(), OrbitControls(), ou toute autre API non-standard.
+// Parties constitutives avec hiérarchie
+// ... code détaillé ...
 
-GÉNÈRE 30-50 LIGNES DE CODE MINIMUM, CRÉATIF ET DÉTAILLÉ. CODE UNIQUEMENT, PAS DE MARKDOWN NI ```javascript:"""
+// Ajout à la scène
+scene.add(mainGroup);
+```
+
+CODE UNIQUEMENT, PAS DE MARKDOWN."""
 
         try:
             # Utilise chat_completion au lieu de text_generation pour Mistral
