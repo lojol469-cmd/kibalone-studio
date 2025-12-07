@@ -7,6 +7,8 @@ class KibaloneStudio {
         this.camera = null;
         this.renderer = null;
         this.axisWidget = null; // Widget d'orientation des axes
+        this.cameraController = null; // Contrôleur de caméra
+        this.cameraViewport = null; // Mini fenêtre vue caméra
         this.objects = [];
         this.currentFrame = 0;
         this.totalFrames = 120;
@@ -29,8 +31,8 @@ class KibaloneStudio {
         console.log('🚀 Kibalone Studio initialisé');
         addLog('🚀 Kibalone Studio initialisé');
         addLog('✅ Scene 3D prête');
-        addLog('💡 Utilisez le chat pour créer des objets 3D avec l\'IA');
-        addLog('🧠 Powered by Mistral (raisonnement) + CodeLlama (code)');
+        addLog('🤖 KibaliAI actif - Contrôle des modules par commandes');
+        addLog('💬 Tapez "cache le widget", "vue z", etc. dans le chat');
     }
     
     async loadDemoMesh() {
@@ -135,6 +137,12 @@ class KibaloneStudio {
         // Axis Widget (widget d'orientation)
         this.axisWidget = new AxisWidget(this.camera);
         
+        // Camera Controller (contrôle avancé caméra)
+        this.cameraController = new CameraController(this.camera, this.scene);
+        
+        // Camera Viewport (mini fenêtre vue caméra)
+        this.cameraViewport = new CameraViewport(this.camera, this.scene);
+        
         // Controls (basic mouse rotation)
         this.initControls();
     }
@@ -200,6 +208,10 @@ class KibaloneStudio {
         // Mettre à jour le widget d'axes
         if (this.axisWidget) {
             this.axisWidget.update();
+        }
+        
+        if (this.cameraViewport) {
+            this.cameraViewport.update();
         }
         
         this.renderer.render(this.scene, this.camera);
@@ -298,136 +310,50 @@ class KibaloneStudio {
         return context;
     }
 
-    // AI Functions - Génération 3D par prompt IA avec compréhension contextuelle
+    // AI Functions - Manipulation directe des modules via KibaliAI
     async processAICommand(prompt) {
         addChatMessage('user', prompt);
-        addChatMessage('ai', '🧠 Analyse contextuelle et génération 3D...');
-        addLog(`📨 Requête utilisateur: "${prompt}"`);
+        addChatMessage('ai', '🤖 Analyse de votre commande...');
+        addLog(`📨 Commande: "${prompt}"`);
         
         try {
-            // 🔍 ANALYSE DU CONTEXTE DE LA SCÈNE
-            const sceneContext = this.getSceneContext();
-            addLog(`📊 Analyse scène: ${sceneContext.total_objects} objet(s) détecté(s)`);
-            
-            if (sceneContext.total_objects > 0) {
-                addLog(`🎯 Contexte:`);
-                if (sceneContext.has_character) addLog(`   • Personnage présent`);
-                if (sceneContext.has_vehicle) addLog(`   • Véhicule présent (${sceneContext.objects.find(o => o.type === 'vehicle')?.name})`);
-                if (sceneContext.has_water) addLog(`   • Eau présente`);
-                if (sceneContext.has_building) addLog(`   • Bâtiment présent`);
-                if (sceneContext.has_environment) addLog(`   • Environnement présent`);
+            // Vérifier que KibaliAI est chargé
+            if (typeof KibaliAI === 'undefined') {
+                throw new Error('KibaliAI n\'est pas chargé');
             }
             
-            // 🚀 GÉNÉRATION CONTEXTUELLE avec Mistral + CodeLlama
-            addLog('🧠 [Mistral] Analyse contextuelle de la requête...');
-            addLog('💻 [CodeLlama] Génération du code Three.js adapté...');
-            addChatMessage('ai', '⚡ Génération du code 3D intelligent avec contexte...');
+            // Exécuter la commande via KibaliAI
+            addLog('🧠 Traitement via KibaliAI...');
+            const result = KibaliAI.executeNatural(prompt);
             
-            const response = await fetch('http://localhost:11000/api/chat/generate-model', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ 
-                    prompt: prompt,
-                    type: 'object',
-                    scene_context: sceneContext  // 🔥 NOUVEAU: Envoie le contexte
-                })
-            });
-            
-            if (!response.ok) throw new Error(`API erreur: ${response.status}`);
-            
-            const result = await response.json();
-            
-            if (result.success && result.model_data && result.model_data.code) {
-                const analysis = result.analysis || {};
-                addLog(`✅ Analyse Mistral: ${analysis.object_type || 'object'} / ${analysis.style || 'realistic'}`);
-                addLog(`✅ Code généré: ${result.model_data.code.length} caractères`);
+            if (result.success) {
+                addLog(`✅ Commande exécutée: [${result.module || 'unknown'}] ${result.command || 'unknown'}`);
+                addChatMessage('ai', `✅ Action réalisée avec succès!`);
                 
-                // Nettoie le code avant exécution
-                let cleanCode = result.model_data.code;
-                
-                // Retire les blocs markdown si présents
-                cleanCode = cleanCode.replace(/```javascript\n?/g, '');
-                cleanCode = cleanCode.replace(/```js\n?/g, '');
-                cleanCode = cleanCode.replace(/```\n?/g, '');
-                
-                // Retire les lignes qui créent une nouvelle scène (on utilise celle existante)
-                cleanCode = cleanCode.split('\n')
-                    .filter(line => {
-                        const trimmed = line.trim();
-                        // Retire les commentaires seuls
-                        if (trimmed.startsWith('//')) return false;
-                        // Retire les lignes qui créent Scene, Camera, Renderer, Controls
-                        if (trimmed.includes('new THREE.Scene()')) return false;
-                        if (trimmed.includes('new THREE.PerspectiveCamera')) return false;
-                        if (trimmed.includes('new THREE.WebGLRenderer')) return false;
-                        if (trimmed.includes('new THREE.OrbitControls')) return false;
-                        if (trimmed.includes('renderer.setSize')) return false;
-                        if (trimmed.includes('document.body.appendChild')) return false;
-                        return trimmed.length === 0 || true;
-                    })
-                    .join('\n');
-                
-                // Remplace scene.add par studio.scene.add si oublié
-                cleanCode = cleanCode.replace(/\bscene\.add\(/g, 'studio.scene.add(');
-                
-                // Vérifie que le code contient les éléments essentiels
-                if (!cleanCode.includes('THREE.')) {
-                    throw new Error('Code généré invalide (pas de Three.js détecté)');
-                }
-                
-                // Exécute le code Three.js généré
-                try {
-                    addLog('🔧 Exécution du code généré...');
-                    eval(cleanCode);
-                    addChatMessage('ai', `✅ "${prompt}" créé avec succès!`);
-                    addLog('✅ Modèle affiché dans la scène');
-                } catch (evalError) {
-                    console.error('Erreur exécution code:', evalError);
-                    console.error('Code problématique:', cleanCode.substring(0, 500));
-                    addLog(`❌ Erreur: ${evalError.message}`);
-                    addLog(`🔧 Auto-correction en cours avec Mistral...`);
-                    addChatMessage('ai', '🔧 Erreur détectée, correction automatique...');
-                    
-                    // AUTO-CORRECTION: Demande à Mistral de corriger
-                    try {
-                        const fixResponse = await fetch('http://localhost:11000/api/chat/fix-code', {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({
-                                code: cleanCode,
-                                error: evalError.message,
-                                prompt: prompt
-                            })
-                        });
-                        
-                        if (fixResponse.ok) {
-                            const fixResult = await fixResponse.json();
-                            if (fixResult.success && fixResult.fixed_code) {
-                                addLog(`✅ Code corrigé par Mistral`);
-                                // Réessaye avec le code corrigé
-                                eval(fixResult.fixed_code);
-                                addChatMessage('ai', `✅ "${prompt}" créé après correction!`);
-                                addLog('✅ Modèle affiché (version corrigée)');
-                            } else {
-                                throw new Error('Correction impossible');
-                            }
-                        } else {
-                            throw new Error('API correction non disponible');
-                        }
-                    } catch (fixError) {
-                        addLog(`⚠️ Auto-correction échouée: ${fixError.message}`);
-                        addChatMessage('ai', '⚠️ Impossible de corriger automatiquement. Reformulez votre demande.');
+                // Afficher le résultat si disponible
+                if (result.result) {
+                    const resultStr = typeof result.result === 'object' 
+                        ? JSON.stringify(result.result, null, 2) 
+                        : result.result;
+                    if (resultStr && resultStr !== 'undefined') {
+                        addLog(`📊 Résultat: ${resultStr}`);
                     }
                 }
             } else {
-                const errorMsg = result.error || 'Erreur génération';
-                addLog(`❌ ${errorMsg}`);
-                addChatMessage('ai', `⚠️ ${errorMsg}`);
+                addLog(`❌ Erreur: ${result.error}`);
+                addChatMessage('ai', `❌ Je n'ai pas pu exécuter cette commande: ${result.error}`);
+                
+                if (result.suggestion) {
+                    addChatMessage('ai', `💡 Suggestion: ${result.suggestion}`);
+                }
+                
+                // Afficher les commandes disponibles en cas d'erreur
+                addChatMessage('ai', '📋 Tapez "aide" pour voir les commandes disponibles.');
             }
         } catch (error) {
-            console.error('Erreur génération 3D:', error);
+            console.error('Erreur KibaliAI:', error);
             addLog(`❌ Erreur: ${error.message}`);
-            addChatMessage('ai', `❌ Erreur: ${error.message}`);
+            addChatMessage('ai', `❌ Erreur système: ${error.message}`);
         }
     }
 

@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KibaliAI - Test Interface</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 3em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.8;
+        }
+        
+        .chat-container {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        
+        .chat-input-area {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        #chatInput {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        #chatInput:focus {
+            border-color: rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.15);
+        }
+        
+        #chatInput::placeholder {
+            color: rgba(255,255,255,0.5);
+        }
+        
+        button {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .output {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        .output-line {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #00ff00;
+            padding-left: 10px;
+        }
+        
+        .output-line.success {
+            border-left-color: #00ff00;
+            color: #00ff00;
+        }
+        
+        .output-line.error {
+            border-left-color: #ff3333;
+            color: #ff3333;
+        }
+        
+        .output-line.info {
+            border-left-color: #3399ff;
+            color: #3399ff;
+        }
+        
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .quick-action {
+            padding: 10px 15px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .quick-action:hover {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.05);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            opacity: 0.8;
+            font-size: 0.9em;
+        }
+        
+        .canvas-container {
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        #renderCanvas {
+            max-width: 100%;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 KibaliAI Control Panel</h1>
+            <p>Contrôlez Kibalone Studio avec des commandes en langage naturel</p>
+        </div>
+        
+        <div class="chat-container">
+            <h2>💬 Chat Interface</h2>
+            <div class="chat-input-area">
+                <input 
+                    type="text" 
+                    id="chatInput" 
+                    placeholder="Tapez votre commande ici... (ex: cache le widget, vue z, déplace en haut à droite)"
+                    onkeypress="if(event.key==='Enter') executeCommand()"
+                >
+                <button onclick="executeCommand()">▶ Exécuter</button>
+            </div>
+            
+            <h3>Actions Rapides</h3>
+            <div class="quick-actions">
+                <div class="quick-action" onclick="quickCommand('cache le widget')">🙈 Cacher Widget</div>
+                <div class="quick-action" onclick="quickCommand('affiche le widget')">👁️ Afficher Widget</div>
+                <div class="quick-action" onclick="quickCommand('vue z')">📐 Vue Z</div>
+                <div class="quick-action" onclick="quickCommand('vue -z')">📐 Vue -Z</div>
+                <div class="quick-action" onclick="quickCommand('vue x')">📐 Vue X</div>
+                <div class="quick-action" onclick="quickCommand('vue y')">📐 Vue Y</div>
+                <div class="quick-action" onclick="quickCommand('réinitialise la caméra')">🔄 Reset Caméra</div>
+                <div class="quick-action" onclick="quickCommand('déplace le widget en haut à droite')">↗️ Haut Droite</div>
+                <div class="quick-action" onclick="quickCommand('déplace le widget en bas à gauche')">↙️ Bas Gauche</div>
+                <div class="quick-action" onclick="quickCommand('redimensionne le widget à 150')">🔍 Agrandir</div>
+                <div class="quick-action" onclick="quickCommand('opacité du widget 0.5')">🌫️ Opacité 50%</div>
+                <div class="quick-action" onclick="quickCommand('status du widget')">📊 Status</div>
+            </div>
+            
+            <h3>Sortie Console</h3>
+            <div class="output" id="output">
+                <div class="output-line info">Système prêt. En attente de commandes...</div>
+            </div>
+        </div>
+        
+        <div class="chat-container">
+            <h2>📊 Statistiques</h2>
+            <div class="stats" id="stats">
+                <div class="stat-card">
+                    <div class="stat-label">Modules</div>
+                    <div class="stat-value" id="modulesCount">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Commandes</div>
+                    <div class="stat-value" id="totalCommands">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Erreurs</div>
+                    <div class="stat-value" id="totalErrors">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Taux de Succès</div>
+                    <div class="stat-value" id="successRate">-</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: center;">
+                <button onclick="showHelp()">❓ Aide</button>
+                <button onclick="listCommands()">📋 Liste Commandes</button>
+                <button onclick="showHistory()">📜 Historique</button>
+                <button onclick="updateStats()">🔄 MAJ Stats</button>
+            </div>
+        </div>
+        
+        <div class="canvas-container">
+            <h2>🎨 Scène 3D</h2>
+            <div id="sceneContainer">
+                <!-- La scène Three.js sera rendue ici -->
+                <p style="opacity: 0.5;">Chargez votre scène Three.js ici...</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Three.js sera chargé ici -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- Scripts KibaliAI -->
+    <script src="kibaliAI.js"></script>
+    <script src="axisWidget.js"></script>
+    
+    <script>
+        // Fonction pour exécuter une commande
+        function executeCommand() {
+            const input = document.getElementById('chatInput');
+            const command = input.value.trim();
+            
+            if (!command) return;
+            
+            addOutput(`> ${command}`, 'info');
+            
+            // Exécution via KibaliAI
+            if (typeof KibaliAI !== 'undefined') {
+                const result = KibaliAI.executeNatural(command);
+                
+                if (result.success) {
+                    addOutput(`✓ Succès: ${command}`, 'success');
+                    if (result.result) {
+                        addOutput(JSON.stringify(result.result, null, 2), 'info');
+                    }
+                } else {
+                    addOutput(`✗ Erreur: ${result.error}`, 'error');
+                    if (result.suggestion) {
+                        addOutput(`💡 ${result.suggestion}`, 'info');
+                    }
+                }
+            } else {
+                addOutput('✗ KibaliAI n\'est pas chargé', 'error');
+            }
+            
+            input.value = '';
+            updateStats();
+        }
+        
+        // Action rapide
+        function quickCommand(command) {
+            document.getElementById('chatInput').value = command;
+            executeCommand();
+        }
+        
+        // Ajouter une ligne à la sortie
+        function addOutput(text, type = 'info') {
+            const output = document.getElementById('output');
+            const line = document.createElement('div');
+            line.className = `output-line ${type}`;
+            line.textContent = text;
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        // Mettre à jour les statistiques
+        function updateStats() {
+            if (typeof KibaliAI !== 'undefined') {
+                const stats = KibaliAI.getStats();
+                document.getElementById('modulesCount').textContent = stats.modulesCount;
+                document.getElementById('totalCommands').textContent = stats.totalCommands;
+                document.getElementById('totalErrors').textContent = stats.totalErrors;
+                document.getElementById('successRate').textContent = stats.successRate;
+            }
+        }
+        
+        // Afficher l'aide
+        function showHelp() {
+            if (typeof KibaliAI !== 'undefined') {
+                KibaliAI.help();
+                addOutput('Aide affichée dans la console (F12)', 'info');
+            }
+        }
+        
+        // Lister les commandes
+        function listCommands() {
+            if (typeof KibaliAI !== 'undefined') {
+                const commands = KibaliAI.listCommands();
+                addOutput('📋 Commandes disponibles:', 'info');
+                addOutput(JSON.stringify(commands, null, 2), 'info');
+            }
+        }
+        
+        // Afficher l'historique
+        function showHistory() {
+            if (typeof KibaliAI !== 'undefined') {
+                const history = KibaliAI.getHistory(10);
+                addOutput('📜 Dernières commandes:', 'info');
+                history.forEach(entry => {
+                    const status = entry.success ? '✓' : '✗';
+                    addOutput(`${status} [${entry.module}] ${entry.command}`, entry.success ? 'success' : 'error');
+                });
+            }
+        }
+        
+        // Initialisation au chargement
+        window.addEventListener('load', function() {
+            addOutput('🚀 KibaliAI Interface chargée', 'success');
+            updateStats();
+            
+            // Vérifier si KibaliAI est disponible
+            if (typeof KibaliAI !== 'undefined') {
+                addOutput('✓ KibaliAI détecté et prêt', 'success');
+            } else {
+                addOutput('⚠️ KibaliAI n\'est pas chargé. Vérifiez que kibaliAI.js est inclus.', 'error');
+            }
+        });
+    </script>
+</body>
+</html>
