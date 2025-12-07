@@ -203,6 +203,13 @@ Adaptation contextuelle: {analysis.get('contextual_adaptation', 'intégration in
         
         code_prompt = f"""Tu es un expert 3D professionnel. Génère du code Three.js de haute qualité pour créer des modèles 3D complexes et réalistes.
 
+⚠️ RÈGLES CRITIQUES - CODE NAVIGATEUR UNIQUEMENT:
+- ❌ INTERDICTION ABSOLUE: import, require, export, module.exports
+- ❌ PAS de Node.js modules (fs, path, etc.)
+- ✅ UNIQUEMENT: Code Three.js pur compatible navigateur
+- ✅ THREE est déjà disponible globalement (window.THREE)
+- ✅ studio.scene est déjà disponible (pas besoin de créer une scène)
+
 TECHNIQUES PROFESSIONNELLES À UTILISER:
 1. **Hiérarchie d'objets**: Utilise THREE.Group() pour organiser les parties
 2. **Géométries avancées**: Combine BoxGeometry, CylinderGeometry, SphereGeometry, ConeGeometry, PlaneGeometry
@@ -215,7 +222,7 @@ TECHNIQUES PROFESSIONNELLES À UTILISER:
 
 STANDARDS PROFESSIONNELS:
 - Noms de variables descriptifs (torsoGroup, headMesh, leftArm, waterPlane, etc.)
-- Commentaires explicatifs
+- Commentaires courts et clairs
 - Positionnement relatif intelligent basé sur le contexte
 - Échelle réaliste (unités mètres)
 - Matériaux avec propriétés physiques réalistes
@@ -285,26 +292,37 @@ CODE UNIQUEMENT, PAS DE MARKDOWN."""
                             code = part
                         break
             
-            # 2. Retire les commentaires multi-lignes qui peuvent casser
+            # 2. 🔥 NOUVEAU: Retire TOUTES les lignes avec import/require/export
             import re
-            code = re.sub(r'/\*.*?\*/', '', code, flags=re.DOTALL)
-            
-            # 3. Retire les lignes de commentaires simples
             lines = []
             for line in code.split('\n'):
                 stripped = line.strip()
-                # Garde seulement si pas un commentaire pur
+                # Élimine les imports/requires/exports
+                if any(keyword in stripped for keyword in ['import ', 'require(', 'export ', 'module.exports']):
+                    print(f"   🚫 Ligne supprimée: {stripped[:50]}")
+                    continue
+                lines.append(line)
+            code = '\n'.join(lines)
+            
+            # 3. Retire les commentaires multi-lignes qui peuvent casser
+            code = re.sub(r'/\*.*?\*/', '', code, flags=re.DOTALL)
+            
+            # 4. Retire les lignes de commentaires simples (sauf URLs)
+            lines = []
+            for line in code.split('\n'):
+                stripped = line.strip()
+                # Garde seulement si pas un commentaire pur (sauf si contient http)
                 if not stripped.startswith('//') or 'http' in stripped:
                     lines.append(line)
             code = '\n'.join(lines)
             
-            # 4. Fixe les parenthèses/accolades mal fermées (basique)
+            # 5. Fixe les parenthèses/accolades mal fermées (basique)
             open_parens = code.count('(')
             close_parens = code.count(')')
             if open_parens > close_parens:
                 code += ')' * (open_parens - close_parens)
             
-            # 5. Ajoute addLog si manquant
+            # 6. Ajoute addLog si manquant
             if 'addLog' not in code:
                 code += f"\naddLog('✅ {prompt} créé');"
             
@@ -440,22 +458,45 @@ addLog('✅ {prompt} créé');
         print(f"🔧 [Mistral] Auto-correction du code...")
         print(f"   Erreur: {error_message}")
         
+        # 🔥 NOUVEAU: Détection d'erreur spécifique import/require
+        if 'import' in error_message.lower() or 'require' in error_message.lower() or 'module' in error_message.lower():
+            print("   🚫 Détection erreur import/require - Nettoyage automatique")
+            # Nettoie directement sans appeler Mistral
+            import re
+            lines = []
+            for line in broken_code.split('\n'):
+                stripped = line.strip()
+                if not any(keyword in stripped for keyword in ['import ', 'require(', 'export ', 'module.exports']):
+                    lines.append(line)
+            cleaned_code = '\n'.join(lines)
+            
+            # Vérifie que le code restant est valide
+            if 'THREE.' in cleaned_code and len(cleaned_code) > 50:
+                print("   ✅ Code nettoyé automatiquement")
+                return cleaned_code
+        
         fix_prompt = f"""Tu es un expert JavaScript/Three.js. Corrige ce code qui génère une erreur.
+
+⚠️ RÈGLES CRITIQUES:
+- ❌ INTERDICTION: import, require, export, module.exports
+- ✅ CODE NAVIGATEUR UNIQUEMENT (THREE déjà disponible)
+- ✅ Utilise studio.scene pour ajouter les objets
 
 ERREUR JAVASCRIPT:
 {error_message}
 
 CODE PROBLÉMATIQUE:
-{broken_code}
+{broken_code[:500]}...
 
 CONTEXTE: Le code devait créer "{original_prompt}" en Three.js
 
 INSTRUCTIONS:
-1. Identifie l'erreur (syntaxe, parenthèses, virgules, etc.)
-2. Corrige le code COMPLÈTEMENT
-3. Retourne UNIQUEMENT le code corrigé, sans explications
-4. Le code doit utiliser THREE.js et studio.scene
-5. PAS de markdown, PAS de commentaires explicatifs
+1. Retire TOUS les import/require/export si présents
+2. Utilise uniquement THREE.* (déjà disponible globalement)
+3. Corrige les erreurs de syntaxe (parenthèses, virgules, etc.)
+4. Retourne UNIQUEMENT le code corrigé complet et fonctionnel
+5. Le code doit utiliser THREE.js et studio.scene
+6. PAS de markdown, PAS de commentaires explicatifs
 
 CODE CORRIGÉ:"""
 
@@ -480,10 +521,21 @@ CODE CORRIGÉ:"""
             
             fixed_code = response.choices[0].message.content.strip()
             
-            # Nettoyage
+            # 🔥 Nettoyage renforcé du code corrigé
             import re
+            # Retire markdown
             fixed_code = re.sub(r'```[a-z]*\n?', '', fixed_code)
             fixed_code = re.sub(r'/\*.*?\*/', '', fixed_code, flags=re.DOTALL)
+            
+            # Retire TOUS les imports/requires/exports
+            lines = []
+            for line in fixed_code.split('\n'):
+                stripped = line.strip()
+                if not any(keyword in stripped for keyword in ['import ', 'require(', 'export ', 'module.exports']):
+                    lines.append(line)
+                else:
+                    print(f"   🚫 Ligne supprimée (correction): {stripped[:50]}")
+            fixed_code = '\n'.join(lines)
             
             print(f"   ✅ Code corrigé: {len(fixed_code)} caractères")
             return fixed_code
